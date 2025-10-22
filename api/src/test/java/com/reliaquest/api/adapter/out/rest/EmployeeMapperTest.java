@@ -1,12 +1,11 @@
 package com.reliaquest.api.adapter.out.rest;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import com.reliaquest.api.application.domain.model.Employee;
+import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-
-import java.util.UUID;
-
-import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * Unit tests for EmployeeMapper.

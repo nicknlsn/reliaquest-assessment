@@ -1,9 +1,8 @@
 package com.reliaquest.api.application.domain.model;
 
+import java.util.UUID;
 import lombok.Builder;
 import lombok.Data;
-
-import java.util.UUID;
 
 @Data
 @Builder

@@ -1,26 +1,25 @@
 package com.reliaquest.api.adapter.in.rest;
 
-import com.reliaquest.api.application.domain.model.Employee;
-import com.reliaquest.api.application.port.in.GetAllEmployeesUseCase;
-import com.reliaquest.api.application.port.in.GetEmployeeByIdUseCase;
-import com.reliaquest.api.application.port.in.GetEmployeesByNameSearchUseCase;
-import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.test.web.servlet.MockMvc;
-
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.UUID;
-
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
+import com.reliaquest.api.application.domain.model.Employee;
+import com.reliaquest.api.application.port.in.GetAllEmployeesUseCase;
+import com.reliaquest.api.application.port.in.GetEmployeeByIdUseCase;
+import com.reliaquest.api.application.port.in.GetEmployeesByNameSearchUseCase;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.UUID;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.test.web.servlet.MockMvc;
 
 /**
  * Web layer test for EmployeeController using @WebMvcTest.
@@ -94,9 +93,7 @@ class EmployeeControllerWebTest {
         when(getAllEmployeesUseCase.getAllEmployees()).thenReturn(Collections.emptyList());
 
         // When & Then
-        mockMvc.perform(get("/api/v1/employee"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$", hasSize(0)));
+        mockMvc.perform(get("/api/v1/employee")).andExpect(status().isOk()).andExpect(jsonPath("$", hasSize(0)));
     }
 
     @Test
@@ -153,7 +150,8 @@ class EmployeeControllerWebTest {
                 .build();
 
         List<Employee> employees = Arrays.asList(employee1, employee2);
-        when(getEmployeesByNameSearchUseCase.getEmployeeByNameSearch(searchString)).thenReturn(employees);
+        when(getEmployeesByNameSearchUseCase.getEmployeeByNameSearch(searchString))
+                .thenReturn(employees);
 
         // When & Then
         mockMvc.perform(get("/api/v1/employee/search/{searchString}", searchString))
@@ -177,7 +175,8 @@ class EmployeeControllerWebTest {
     void getEmployeesByNameSearch_shouldReturnEmptyList_whenNoEmployeesMatch() throws Exception {
         // Given
         String searchString = "NonExistent";
-        when(getEmployeesByNameSearchUseCase.getEmployeeByNameSearch(searchString)).thenReturn(Collections.emptyList());
+        when(getEmployeesByNameSearchUseCase.getEmployeeByNameSearch(searchString))
+                .thenReturn(Collections.emptyList());
 
         // When & Then
         mockMvc.perform(get("/api/v1/employee/search/{searchString}", searchString))
@@ -201,7 +200,8 @@ class EmployeeControllerWebTest {
                 .build();
 
         List<Employee> employees = Collections.singletonList(employee);
-        when(getEmployeesByNameSearchUseCase.getEmployeeByNameSearch(searchString)).thenReturn(employees);
+        when(getEmployeesByNameSearchUseCase.getEmployeeByNameSearch(searchString))
+                .thenReturn(employees);
 
         // When & Then
         mockMvc.perform(get("/api/v1/employee/search/{searchString}", searchString))
@@ -231,7 +231,8 @@ class EmployeeControllerWebTest {
                 .build();
 
         List<Employee> employees = Collections.singletonList(employee);
-        when(getEmployeesByNameSearchUseCase.getEmployeeByNameSearch(searchString)).thenReturn(employees);
+        when(getEmployeesByNameSearchUseCase.getEmployeeByNameSearch(searchString))
+                .thenReturn(employees);
 
         // When & Then
         mockMvc.perform(get("/api/v1/employee/search/{searchString}", searchString))
@@ -278,8 +279,7 @@ class EmployeeControllerWebTest {
         when(getEmployeeByIdUseCase.getEmployeeById(nonExistentId)).thenReturn(null);
 
         // When & Then
-        mockMvc.perform(get("/api/v1/employee/{id}", nonExistentId.toString()))
-                .andExpect(status().isNotFound());
+        mockMvc.perform(get("/api/v1/employee/{id}", nonExistentId.toString())).andExpect(status().isNotFound());
     }
 
     @Test
@@ -314,8 +314,7 @@ class EmployeeControllerWebTest {
         // When & Then - Note: Spring will match this to getAllEmployees instead due to routing
         // So we test with whitespace instead
         String whitespaceId = "   ";
-        mockMvc.perform(get("/api/v1/employee/{id}", whitespaceId))
-                .andExpect(status().isBadRequest());
+        mockMvc.perform(get("/api/v1/employee/{id}", whitespaceId)).andExpect(status().isBadRequest());
     }
 
     @Test

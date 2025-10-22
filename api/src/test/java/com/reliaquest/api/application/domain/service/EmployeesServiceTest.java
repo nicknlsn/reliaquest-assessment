@@ -1,22 +1,21 @@
 package com.reliaquest.api.application.domain.service;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
 import com.reliaquest.api.application.domain.model.Employee;
 import com.reliaquest.api.application.port.out.LoadEmployeesPort;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.UUID;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 
 /**
  * Unit tests for EmployeesService.
@@ -117,7 +116,8 @@ class EmployeesServiceTest {
         // Assert
         assertThat(result).isNotNull();
         assertThat(result).hasSize(3);
-        assertThat(result).extracting(Employee::getName)
+        assertThat(result)
+                .extracting(Employee::getName)
                 .containsExactlyInAnyOrder("John Doe", "Johnny Appleseed", "Alice Johnson");
         verify(loadEmployeesPort).loadAllEmployees();
     }

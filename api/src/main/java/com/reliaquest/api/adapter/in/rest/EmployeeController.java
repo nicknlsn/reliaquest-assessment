@@ -5,6 +5,8 @@ import com.reliaquest.api.application.port.in.GetAllEmployeesUseCase;
 import com.reliaquest.api.application.port.in.GetEmployeeByIdUseCase;
 import com.reliaquest.api.application.port.in.GetEmployeesByNameSearchUseCase;
 import com.reliaquest.api.controller.IEmployeeController;
+import java.util.List;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -13,9 +15,6 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-
-import java.util.List;
-import java.util.UUID;
 
 @Slf4j
 @RestController
@@ -38,7 +37,8 @@ public class EmployeeController implements IEmployeeController<Employee, String>
     @GetMapping("/search/{searchString}")
     public ResponseEntity<List<Employee>> getEmployeesByNameSearch(@PathVariable String searchString) {
         log.info("Request to get employees by name search with search string: {}", searchString);
-        return new ResponseEntity<>(getEmployeesByNameSearchUseCase.getEmployeeByNameSearch(searchString), HttpStatus.OK);
+        return new ResponseEntity<>(
+                getEmployeesByNameSearchUseCase.getEmployeeByNameSearch(searchString), HttpStatus.OK);
     }
 
     @Override
@@ -47,7 +47,9 @@ public class EmployeeController implements IEmployeeController<Employee, String>
         log.info("Request to get employee by id {}", id);
         UUID uuid = validateAndParseUUID(id);
         Employee employee = getEmployeeByIdUseCase.getEmployeeById(uuid);
-        return employee == null ? new ResponseEntity<>(null, HttpStatus.NOT_FOUND) : new ResponseEntity<>(employee, HttpStatus.OK);
+        return employee == null
+                ? new ResponseEntity<>(null, HttpStatus.NOT_FOUND)
+                : new ResponseEntity<>(employee, HttpStatus.OK);
     }
 
     /**

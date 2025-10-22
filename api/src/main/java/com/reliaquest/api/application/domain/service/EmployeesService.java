@@ -7,14 +7,14 @@ import com.reliaquest.api.application.port.in.GetEmployeesByNameSearchUseCase;
 import com.reliaquest.api.application.port.out.LoadEmployeeByIdPort;
 import com.reliaquest.api.application.port.out.LoadEmployeesPort;
 import com.reliaquest.api.common.UseCase;
-import lombok.RequiredArgsConstructor;
-
 import java.util.List;
 import java.util.UUID;
+import lombok.RequiredArgsConstructor;
 
 @UseCase
 @RequiredArgsConstructor
-public class EmployeesService implements GetAllEmployeesUseCase, GetEmployeesByNameSearchUseCase, GetEmployeeByIdUseCase {
+public class EmployeesService
+        implements GetAllEmployeesUseCase, GetEmployeesByNameSearchUseCase, GetEmployeeByIdUseCase {
 
     private final LoadEmployeesPort loadEmployeesPort;
     private final LoadEmployeeByIdPort loadEmployeeByIdPort;

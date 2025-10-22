@@ -1,8 +1,7 @@
 package com.reliaquest.api.adapter.out.rest;
 
-import lombok.Data;
-
 import java.util.UUID;
+import lombok.Data;
 
 @Data
 class EmployeeEntity {

@@ -1,6 +1,16 @@
 package com.reliaquest.api.adapter.out.rest;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
 import com.reliaquest.api.application.domain.model.Employee;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -14,18 +24,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.HttpServerErrorException;
 import org.springframework.web.client.RestTemplate;
-
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.UUID;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 
 /**
  * Unit tests for EmployeeServerAdapter.
@@ -102,11 +100,11 @@ class EmployeeServerAdapterTest {
                 new ResponseEntity<>(serverResponse, HttpStatus.OK);
 
         when(restTemplate.exchange(
-                eq("http://localhost:8112/api/v1/employee"),
-                eq(HttpMethod.GET),
-                eq(null),
-                any(ParameterizedTypeReference.class)
-        )).thenReturn(responseEntity);
+                        eq("http://localhost:8112/api/v1/employee"),
+                        eq(HttpMethod.GET),
+                        eq(null),
+                        any(ParameterizedTypeReference.class)))
+                .thenReturn(responseEntity);
 
         when(employeeMapper.toEmployee(testEntity1)).thenReturn(testEmployee1);
         when(employeeMapper.toEmployee(testEntity2)).thenReturn(testEmployee2);
@@ -133,11 +131,11 @@ class EmployeeServerAdapterTest {
                 new ResponseEntity<>(serverResponse, HttpStatus.OK);
 
         when(restTemplate.exchange(
-                eq("http://localhost:8112/api/v1/employee"),
-                eq(HttpMethod.GET),
-                eq(null),
-                any(ParameterizedTypeReference.class)
-        )).thenReturn(responseEntity);
+                        eq("http://localhost:8112/api/v1/employee"),
+                        eq(HttpMethod.GET),
+                        eq(null),
+                        any(ParameterizedTypeReference.class)))
+                .thenReturn(responseEntity);
 
         // When
         List<Employee> result = employeeServerAdapter.loadAllEmployees();
@@ -154,11 +152,11 @@ class EmployeeServerAdapterTest {
                 new ResponseEntity<>(null, HttpStatus.OK);
 
         when(restTemplate.exchange(
-                eq("http://localhost:8112/api/v1/employee"),
-                eq(HttpMethod.GET),
-                eq(null),
-                any(ParameterizedTypeReference.class)
-        )).thenReturn(responseEntity);
+                        eq("http://localhost:8112/api/v1/employee"),
+                        eq(HttpMethod.GET),
+                        eq(null),
+                        any(ParameterizedTypeReference.class)))
+                .thenReturn(responseEntity);
 
         // When
         List<Employee> result = employeeServerAdapter.loadAllEmployees();
@@ -178,11 +176,11 @@ class EmployeeServerAdapterTest {
                 new ResponseEntity<>(serverResponse, HttpStatus.INTERNAL_SERVER_ERROR);
 
         when(restTemplate.exchange(
-                eq("http://localhost:8112/api/v1/employee"),
-                eq(HttpMethod.GET),
-                eq(null),
-                any(ParameterizedTypeReference.class)
-        )).thenReturn(responseEntity);
+                        eq("http://localhost:8112/api/v1/employee"),
+                        eq(HttpMethod.GET),
+                        eq(null),
+                        any(ParameterizedTypeReference.class)))
+                .thenReturn(responseEntity);
 
         // When
         List<Employee> result = employeeServerAdapter.loadAllEmployees();
@@ -195,11 +193,11 @@ class EmployeeServerAdapterTest {
     void loadAllEmployees_shouldReturnNull_whenRestTemplateThrowsException() {
         // Given
         when(restTemplate.exchange(
-                eq("http://localhost:8112/api/v1/employee"),
-                eq(HttpMethod.GET),
-                eq(null),
-                any(ParameterizedTypeReference.class)
-        )).thenThrow(new HttpServerErrorException(HttpStatus.INTERNAL_SERVER_ERROR));
+                        eq("http://localhost:8112/api/v1/employee"),
+                        eq(HttpMethod.GET),
+                        eq(null),
+                        any(ParameterizedTypeReference.class)))
+                .thenThrow(new HttpServerErrorException(HttpStatus.INTERNAL_SERVER_ERROR));
 
         // When
         List<Employee> result = employeeServerAdapter.loadAllEmployees();
@@ -222,11 +220,11 @@ class EmployeeServerAdapterTest {
                 new ResponseEntity<>(serverResponse, HttpStatus.OK);
 
         when(restTemplate.exchange(
-                eq("http://localhost:8112/api/v1/employee/" + employeeId),
-                eq(HttpMethod.GET),
-                eq(null),
-                any(ParameterizedTypeReference.class)
-        )).thenReturn(responseEntity);
+                        eq("http://localhost:8112/api/v1/employee/" + employeeId),
+                        eq(HttpMethod.GET),
+                        eq(null),
+                        any(ParameterizedTypeReference.class)))
+                .thenReturn(responseEntity);
 
         when(employeeMapper.toEmployee(testEntity1)).thenReturn(testEmployee1);
 
@@ -245,11 +243,11 @@ class EmployeeServerAdapterTest {
         UUID nonExistentId = UUID.randomUUID();
 
         when(restTemplate.exchange(
-                eq("http://localhost:8112/api/v1/employee/" + nonExistentId),
-                eq(HttpMethod.GET),
-                eq(null),
-                any(ParameterizedTypeReference.class)
-        )).thenThrow(new HttpClientErrorException(HttpStatus.NOT_FOUND));
+                        eq("http://localhost:8112/api/v1/employee/" + nonExistentId),
+                        eq(HttpMethod.GET),
+                        eq(null),
+                        any(ParameterizedTypeReference.class)))
+                .thenThrow(new HttpClientErrorException(HttpStatus.NOT_FOUND));
 
         // When
         Employee result = employeeServerAdapter.loadEmployeeById(nonExistentId);
@@ -266,11 +264,11 @@ class EmployeeServerAdapterTest {
                 new ResponseEntity<>(null, HttpStatus.OK);
 
         when(restTemplate.exchange(
-                eq("http://localhost:8112/api/v1/employee/" + employeeId),
-                eq(HttpMethod.GET),
-                eq(null),
-                any(ParameterizedTypeReference.class)
-        )).thenReturn(responseEntity);
+                        eq("http://localhost:8112/api/v1/employee/" + employeeId),
+                        eq(HttpMethod.GET),
+                        eq(null),
+                        any(ParameterizedTypeReference.class)))
+                .thenReturn(responseEntity);
 
         // When
         Employee result = employeeServerAdapter.loadEmployeeById(employeeId);
@@ -291,11 +289,11 @@ class EmployeeServerAdapterTest {
                 new ResponseEntity<>(serverResponse, HttpStatus.INTERNAL_SERVER_ERROR);
 
         when(restTemplate.exchange(
-                eq("http://localhost:8112/api/v1/employee/" + employeeId),
-                eq(HttpMethod.GET),
-                eq(null),
-                any(ParameterizedTypeReference.class)
-        )).thenReturn(responseEntity);
+                        eq("http://localhost:8112/api/v1/employee/" + employeeId),
+                        eq(HttpMethod.GET),
+                        eq(null),
+                        any(ParameterizedTypeReference.class)))
+                .thenReturn(responseEntity);
 
         // When
         Employee result = employeeServerAdapter.loadEmployeeById(employeeId);
@@ -310,11 +308,11 @@ class EmployeeServerAdapterTest {
         UUID employeeId = UUID.randomUUID();
 
         when(restTemplate.exchange(
-                eq("http://localhost:8112/api/v1/employee/" + employeeId),
-                eq(HttpMethod.GET),
-                eq(null),
-                any(ParameterizedTypeReference.class)
-        )).thenThrow(new HttpClientErrorException(HttpStatus.BAD_REQUEST));
+                        eq("http://localhost:8112/api/v1/employee/" + employeeId),
+                        eq(HttpMethod.GET),
+                        eq(null),
+                        any(ParameterizedTypeReference.class)))
+                .thenThrow(new HttpClientErrorException(HttpStatus.BAD_REQUEST));
 
         // When
         Employee result = employeeServerAdapter.loadEmployeeById(employeeId);
@@ -329,11 +327,11 @@ class EmployeeServerAdapterTest {
         UUID employeeId = UUID.randomUUID();
 
         when(restTemplate.exchange(
-                eq("http://localhost:8112/api/v1/employee/" + employeeId),
-                eq(HttpMethod.GET),
-                eq(null),
-                any(ParameterizedTypeReference.class)
-        )).thenThrow(new HttpClientErrorException(HttpStatus.UNAUTHORIZED));
+                        eq("http://localhost:8112/api/v1/employee/" + employeeId),
+                        eq(HttpMethod.GET),
+                        eq(null),
+                        any(ParameterizedTypeReference.class)))
+                .thenThrow(new HttpClientErrorException(HttpStatus.UNAUTHORIZED));
 
         // When
         Employee result = employeeServerAdapter.loadEmployeeById(employeeId);

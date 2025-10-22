@@ -1,13 +1,12 @@
 package com.reliaquest.api.common;
 
-import org.springframework.core.annotation.AliasFor;
-import org.springframework.stereotype.Component;
-
 import java.lang.annotation.Documented;
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
+import org.springframework.core.annotation.AliasFor;
+import org.springframework.stereotype.Component;
 
 /**
  * This custom interface does the same thing as the @Service annotation provided by Spring, which is to make classes
@@ -28,5 +27,4 @@ public @interface Mapper {
      */
     @AliasFor(annotation = Component.class)
     String value() default "";
-
 }
