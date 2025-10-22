@@ -12,6 +12,7 @@ import com.reliaquest.api.application.port.in.GetAllEmployeesUseCase;
 import com.reliaquest.api.application.port.in.GetEmployeeByIdUseCase;
 import com.reliaquest.api.application.port.in.GetEmployeesByNameSearchUseCase;
 import com.reliaquest.api.application.port.in.GetHighestSalaryUseCase;
+import com.reliaquest.api.application.port.in.GetTopTenEarnerNamesUseCase;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -45,6 +46,9 @@ class EmployeeControllerWebTest {
 
     @MockBean
     private GetHighestSalaryUseCase getHighestSalaryUseCase;
+
+    @MockBean
+    private GetTopTenEarnerNamesUseCase getTopTenEarnerNamesUseCase;
 
     @Test
     void getAllEmployees_shouldReturnListOfEmployees_whenEmployeesExist() throws Exception {
@@ -402,5 +406,71 @@ class EmployeeControllerWebTest {
         mockMvc.perform(get("/api/v1/employee/highestSalary"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$", is(150000)));
+    }
+
+    @Test
+    void getTopTenHighestEarningEmployeeNames_shouldReturnTopTenNames_whenMoreThanTenEmployeesExist()
+            throws Exception {
+        // Given
+        List<String> topTenNames = Arrays.asList(
+                "Employee 1",
+                "Employee 2",
+                "Employee 3",
+                "Employee 4",
+                "Employee 5",
+                "Employee 6",
+                "Employee 7",
+                "Employee 8",
+                "Employee 9",
+                "Employee 10");
+        when(getTopTenEarnerNamesUseCase.getTopTenEarnerNames()).thenReturn(topTenNames);
+
+        // When & Then
+        mockMvc.perform(get("/api/v1/employee/topTenHighestEarningEmployeeNames"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(10)))
+                .andExpect(jsonPath("$[0]", is("Employee 1")))
+                .andExpect(jsonPath("$[9]", is("Employee 10")));
+    }
+
+    @Test
+    void getTopTenHighestEarningEmployeeNames_shouldReturnAllNames_whenFewerThanTenEmployeesExist()
+            throws Exception {
+        // Given
+        List<String> names = Arrays.asList("Alice Johnson", "Bob Smith", "Charlie Brown");
+        when(getTopTenEarnerNamesUseCase.getTopTenEarnerNames()).thenReturn(names);
+
+        // When & Then
+        mockMvc.perform(get("/api/v1/employee/topTenHighestEarningEmployeeNames"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(3)))
+                .andExpect(jsonPath("$[0]", is("Alice Johnson")))
+                .andExpect(jsonPath("$[1]", is("Bob Smith")))
+                .andExpect(jsonPath("$[2]", is("Charlie Brown")));
+    }
+
+    @Test
+    void getTopTenHighestEarningEmployeeNames_shouldReturnEmptyList_whenNoEmployeesExist() throws Exception {
+        // Given
+        when(getTopTenEarnerNamesUseCase.getTopTenEarnerNames()).thenReturn(Collections.emptyList());
+
+        // When & Then
+        mockMvc.perform(get("/api/v1/employee/topTenHighestEarningEmployeeNames"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(0)));
+    }
+
+    @Test
+    void getTopTenHighestEarningEmployeeNames_shouldReturnExactlyTenNames_whenExactlyTenEmployeesExist()
+            throws Exception {
+        // Given
+        List<String> names = Arrays.asList(
+                "Name1", "Name2", "Name3", "Name4", "Name5", "Name6", "Name7", "Name8", "Name9", "Name10");
+        when(getTopTenEarnerNamesUseCase.getTopTenEarnerNames()).thenReturn(names);
+
+        // When & Then
+        mockMvc.perform(get("/api/v1/employee/topTenHighestEarningEmployeeNames"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(10)));
     }
 }

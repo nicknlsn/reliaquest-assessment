@@ -6,6 +6,7 @@ import static org.mockito.Mockito.when;
 
 import com.reliaquest.api.application.domain.model.Employee;
 import com.reliaquest.api.application.port.out.LoadEmployeesPort;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -368,6 +369,209 @@ class EmployeesServiceTest {
         // Assert
         assertThat(result).isNotNull();
         assertThat(result).isEqualTo(0);
+        verify(loadEmployeesPort).loadAllEmployees();
+    }
+
+    @Test
+    void getTopTenEarnerNames_shouldReturnTopTenNames_whenMoreThanTenEmployeesExist() {
+        // Arrange - Create 15 employees with varying salaries
+        List<Employee> employees = new ArrayList<>();
+        for (int i = 1; i <= 15; i++) {
+            employees.add(Employee.builder()
+                    .id(UUID.randomUUID())
+                    .name("Employee " + i)
+                    .salary(100000 + (i * 1000)) // Salaries: 101000, 102000, ..., 115000
+                    .age(30)
+                    .title("Developer")
+                    .email("employee" + i + "@example.com")
+                    .build());
+        }
+
+        when(loadEmployeesPort.loadAllEmployees()).thenReturn(employees);
+
+        // Act
+        List<String> result = employeesService.getTopTenEarnerNames();
+
+        // Assert
+        assertThat(result).isNotNull();
+        assertThat(result).hasSize(10);
+        // Highest earners should be Employee 15 down to Employee 6 (descending order by salary)
+        assertThat(result).containsExactly(
+                "Employee 15",
+                "Employee 14",
+                "Employee 13",
+                "Employee 12",
+                "Employee 11",
+                "Employee 10",
+                "Employee 9",
+                "Employee 8",
+                "Employee 7",
+                "Employee 6");
+        verify(loadEmployeesPort).loadAllEmployees();
+    }
+
+    @Test
+    void getTopTenEarnerNames_shouldReturnAllNames_whenFewerThanTenEmployeesExist() {
+        // Arrange - Create 5 employees
+        List<Employee> employees = Arrays.asList(
+                Employee.builder()
+                        .id(UUID.randomUUID())
+                        .name("High Earner")
+                        .salary(100000)
+                        .age(35)
+                        .title("Senior Dev")
+                        .email("high@example.com")
+                        .build(),
+                Employee.builder()
+                        .id(UUID.randomUUID())
+                        .name("Mid Earner")
+                        .salary(80000)
+                        .age(30)
+                        .title("Developer")
+                        .email("mid@example.com")
+                        .build(),
+                Employee.builder()
+                        .id(UUID.randomUUID())
+                        .name("Low Earner")
+                        .salary(60000)
+                        .age(25)
+                        .title("Junior Dev")
+                        .email("low@example.com")
+                        .build());
+
+        when(loadEmployeesPort.loadAllEmployees()).thenReturn(employees);
+
+        // Act
+        List<String> result = employeesService.getTopTenEarnerNames();
+
+        // Assert
+        assertThat(result).isNotNull();
+        assertThat(result).hasSize(3);
+        assertThat(result).containsExactly("High Earner", "Mid Earner", "Low Earner");
+        verify(loadEmployeesPort).loadAllEmployees();
+    }
+
+    @Test
+    void getTopTenEarnerNames_shouldReturnEmptyList_whenNoEmployeesExist() {
+        // Arrange
+        when(loadEmployeesPort.loadAllEmployees()).thenReturn(Collections.emptyList());
+
+        // Act
+        List<String> result = employeesService.getTopTenEarnerNames();
+
+        // Assert
+        assertThat(result).isNotNull();
+        assertThat(result).isEmpty();
+        verify(loadEmployeesPort).loadAllEmployees();
+    }
+
+    @Test
+    void getTopTenEarnerNames_shouldReturnNamesInDescendingOrderBySalary() {
+        // Arrange - Create employees with specific salaries (not in order)
+        List<Employee> employees = Arrays.asList(
+                Employee.builder()
+                        .id(UUID.randomUUID())
+                        .name("Middle")
+                        .salary(75000)
+                        .age(30)
+                        .title("Developer")
+                        .email("middle@example.com")
+                        .build(),
+                Employee.builder()
+                        .id(UUID.randomUUID())
+                        .name("Highest")
+                        .salary(100000)
+                        .age(35)
+                        .title("Senior")
+                        .email("highest@example.com")
+                        .build(),
+                Employee.builder()
+                        .id(UUID.randomUUID())
+                        .name("Lowest")
+                        .salary(50000)
+                        .age(25)
+                        .title("Junior")
+                        .email("lowest@example.com")
+                        .build());
+
+        when(loadEmployeesPort.loadAllEmployees()).thenReturn(employees);
+
+        // Act
+        List<String> result = employeesService.getTopTenEarnerNames();
+
+        // Assert
+        assertThat(result).isNotNull();
+        assertThat(result).hasSize(3);
+        assertThat(result).containsExactly("Highest", "Middle", "Lowest");
+        verify(loadEmployeesPort).loadAllEmployees();
+    }
+
+    @Test
+    void getTopTenEarnerNames_shouldHandleEmployeesWithSameSalary() {
+        // Arrange - Create employees where some have the same salary
+        List<Employee> employees = Arrays.asList(
+                Employee.builder()
+                        .id(UUID.randomUUID())
+                        .name("Employee A")
+                        .salary(80000)
+                        .age(30)
+                        .title("Developer")
+                        .email("a@example.com")
+                        .build(),
+                Employee.builder()
+                        .id(UUID.randomUUID())
+                        .name("Employee B")
+                        .salary(80000)
+                        .age(28)
+                        .title("Developer")
+                        .email("b@example.com")
+                        .build(),
+                Employee.builder()
+                        .id(UUID.randomUUID())
+                        .name("Employee C")
+                        .salary(90000)
+                        .age(35)
+                        .title("Senior Dev")
+                        .email("c@example.com")
+                        .build());
+
+        when(loadEmployeesPort.loadAllEmployees()).thenReturn(employees);
+
+        // Act
+        List<String> result = employeesService.getTopTenEarnerNames();
+
+        // Assert
+        assertThat(result).isNotNull();
+        assertThat(result).hasSize(3);
+        assertThat(result.get(0)).isEqualTo("Employee C"); // Highest salary first
+        // A and B both have 80000, order between them may vary but both should be present
+        assertThat(result).contains("Employee A", "Employee B");
+        verify(loadEmployeesPort).loadAllEmployees();
+    }
+
+    @Test
+    void getTopTenEarnerNames_shouldReturnExactlyTenNames_whenExactlyTenEmployeesExist() {
+        // Arrange - Create exactly 10 employees
+        List<Employee> employees = new ArrayList<>();
+        for (int i = 1; i <= 10; i++) {
+            employees.add(Employee.builder()
+                    .id(UUID.randomUUID())
+                    .name("Employee " + i)
+                    .salary(50000 + (i * 1000))
+                    .age(30)
+                    .title("Developer")
+                    .email("employee" + i + "@example.com")
+                    .build());
+        }
+
+        when(loadEmployeesPort.loadAllEmployees()).thenReturn(employees);
+
+        // Act
+        List<String> result = employeesService.getTopTenEarnerNames();
+
+        // Assert
+        assertThat(result).isNotNull();
+        assertThat(result).hasSize(10);
         verify(loadEmployeesPort).loadAllEmployees();
     }
 }
