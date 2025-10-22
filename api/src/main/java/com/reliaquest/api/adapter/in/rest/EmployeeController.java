@@ -85,6 +85,7 @@ public class EmployeeController implements IEmployeeController<Employee, String>
     @Override
     @GetMapping("/topTenHighestEarningEmployeeNames")
     public ResponseEntity<List<String>> getTopTenHighestEarningEmployeeNames() {
+        log.info("Request to get top ten employee names");
         return new ResponseEntity<>(getTopTenEarnerNamesUseCase.getTopTenEarnerNames(), HttpStatus.OK);
     }
 
