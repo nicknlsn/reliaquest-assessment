@@ -1,0 +1,344 @@
+package com.reliaquest.api.adapter.out.rest;
+
+import com.reliaquest.api.application.domain.model.Employee;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.client.HttpServerErrorException;
+import org.springframework.web.client.RestTemplate;
+
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.UUID;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
+/**
+ * Unit tests for EmployeeServerAdapter.
+ * Tests the adapter layer that communicates with the external employee server.
+ */
+@ExtendWith(MockitoExtension.class)
+class EmployeeServerAdapterTest {
+
+    @Mock
+    private RestTemplate restTemplate;
+
+    @Mock
+    private EmployeeMapper employeeMapper;
+
+    @InjectMocks
+    private EmployeeServerAdapter employeeServerAdapter;
+
+    private EmployeeEntity testEntity1;
+    private EmployeeEntity testEntity2;
+    private Employee testEmployee1;
+    private Employee testEmployee2;
+
+    @BeforeEach
+    void setUp() {
+        UUID id1 = UUID.randomUUID();
+        UUID id2 = UUID.randomUUID();
+
+        testEntity1 = new EmployeeEntity();
+        testEntity1.setId(id1);
+        testEntity1.setEmployee_name("John Doe");
+        testEntity1.setEmployee_salary(75000);
+        testEntity1.setEmployee_age(30);
+        testEntity1.setEmployee_title("Software Engineer");
+        testEntity1.setEmployee_email("john.doe@example.com");
+
+        testEntity2 = new EmployeeEntity();
+        testEntity2.setId(id2);
+        testEntity2.setEmployee_name("Jane Smith");
+        testEntity2.setEmployee_salary(85000);
+        testEntity2.setEmployee_age(28);
+        testEntity2.setEmployee_title("Senior Software Engineer");
+        testEntity2.setEmployee_email("jane.smith@example.com");
+
+        testEmployee1 = Employee.builder()
+                .id(id1)
+                .name("John Doe")
+                .salary(75000)
+                .age(30)
+                .title("Software Engineer")
+                .email("john.doe@example.com")
+                .build();
+
+        testEmployee2 = Employee.builder()
+                .id(id2)
+                .name("Jane Smith")
+                .salary(85000)
+                .age(28)
+                .title("Senior Software Engineer")
+                .email("jane.smith@example.com")
+                .build();
+    }
+
+    // loadAllEmployees tests
+
+    @Test
+    void loadAllEmployees_shouldReturnEmployeeList_whenServerReturnsSuccessfulResponse() {
+        // Given
+        List<EmployeeEntity> entities = Arrays.asList(testEntity1, testEntity2);
+        EmployeeServerResponse<List<EmployeeEntity>> serverResponse = new EmployeeServerResponse<>();
+        serverResponse.setData(entities);
+        serverResponse.setStatus("success");
+
+        ResponseEntity<EmployeeServerResponse<List<EmployeeEntity>>> responseEntity =
+                new ResponseEntity<>(serverResponse, HttpStatus.OK);
+
+        when(restTemplate.exchange(
+                eq("http://localhost:8112/api/v1/employee"),
+                eq(HttpMethod.GET),
+                eq(null),
+                any(ParameterizedTypeReference.class)
+        )).thenReturn(responseEntity);
+
+        when(employeeMapper.toEmployee(testEntity1)).thenReturn(testEmployee1);
+        when(employeeMapper.toEmployee(testEntity2)).thenReturn(testEmployee2);
+
+        // When
+        List<Employee> result = employeeServerAdapter.loadAllEmployees();
+
+        // Then
+        assertThat(result).isNotNull();
+        assertThat(result).hasSize(2);
+        assertThat(result).containsExactly(testEmployee1, testEmployee2);
+        verify(employeeMapper).toEmployee(testEntity1);
+        verify(employeeMapper).toEmployee(testEntity2);
+    }
+
+    @Test
+    void loadAllEmployees_shouldReturnEmptyList_whenServerReturnsEmptyList() {
+        // Given
+        EmployeeServerResponse<List<EmployeeEntity>> serverResponse = new EmployeeServerResponse<>();
+        serverResponse.setData(Collections.emptyList());
+        serverResponse.setStatus("success");
+
+        ResponseEntity<EmployeeServerResponse<List<EmployeeEntity>>> responseEntity =
+                new ResponseEntity<>(serverResponse, HttpStatus.OK);
+
+        when(restTemplate.exchange(
+                eq("http://localhost:8112/api/v1/employee"),
+                eq(HttpMethod.GET),
+                eq(null),
+                any(ParameterizedTypeReference.class)
+        )).thenReturn(responseEntity);
+
+        // When
+        List<Employee> result = employeeServerAdapter.loadAllEmployees();
+
+        // Then
+        assertThat(result).isNotNull();
+        assertThat(result).isEmpty();
+    }
+
+    @Test
+    void loadAllEmployees_shouldReturnNull_whenResponseBodyIsNull() {
+        // Given
+        ResponseEntity<EmployeeServerResponse<List<EmployeeEntity>>> responseEntity =
+                new ResponseEntity<>(null, HttpStatus.OK);
+
+        when(restTemplate.exchange(
+                eq("http://localhost:8112/api/v1/employee"),
+                eq(HttpMethod.GET),
+                eq(null),
+                any(ParameterizedTypeReference.class)
+        )).thenReturn(responseEntity);
+
+        // When
+        List<Employee> result = employeeServerAdapter.loadAllEmployees();
+
+        // Then
+        assertThat(result).isNull();
+    }
+
+    @Test
+    void loadAllEmployees_shouldReturnNull_whenServerReturnsNon2xxStatus() {
+        // Given
+        EmployeeServerResponse<List<EmployeeEntity>> serverResponse = new EmployeeServerResponse<>();
+        serverResponse.setData(Collections.emptyList());
+        serverResponse.setStatus("error");
+
+        ResponseEntity<EmployeeServerResponse<List<EmployeeEntity>>> responseEntity =
+                new ResponseEntity<>(serverResponse, HttpStatus.INTERNAL_SERVER_ERROR);
+
+        when(restTemplate.exchange(
+                eq("http://localhost:8112/api/v1/employee"),
+                eq(HttpMethod.GET),
+                eq(null),
+                any(ParameterizedTypeReference.class)
+        )).thenReturn(responseEntity);
+
+        // When
+        List<Employee> result = employeeServerAdapter.loadAllEmployees();
+
+        // Then
+        assertThat(result).isNull();
+    }
+
+    @Test
+    void loadAllEmployees_shouldReturnNull_whenRestTemplateThrowsException() {
+        // Given
+        when(restTemplate.exchange(
+                eq("http://localhost:8112/api/v1/employee"),
+                eq(HttpMethod.GET),
+                eq(null),
+                any(ParameterizedTypeReference.class)
+        )).thenThrow(new HttpServerErrorException(HttpStatus.INTERNAL_SERVER_ERROR));
+
+        // When
+        List<Employee> result = employeeServerAdapter.loadAllEmployees();
+
+        // Then
+        assertThat(result).isNull();
+    }
+
+    // loadEmployeeById tests
+
+    @Test
+    void loadEmployeeById_shouldReturnEmployee_whenServerReturnsSuccessfulResponse() {
+        // Given
+        UUID employeeId = testEntity1.getId();
+        EmployeeServerResponse<EmployeeEntity> serverResponse = new EmployeeServerResponse<>();
+        serverResponse.setData(testEntity1);
+        serverResponse.setStatus("success");
+
+        ResponseEntity<EmployeeServerResponse<EmployeeEntity>> responseEntity =
+                new ResponseEntity<>(serverResponse, HttpStatus.OK);
+
+        when(restTemplate.exchange(
+                eq("http://localhost:8112/api/v1/employee/" + employeeId),
+                eq(HttpMethod.GET),
+                eq(null),
+                any(ParameterizedTypeReference.class)
+        )).thenReturn(responseEntity);
+
+        when(employeeMapper.toEmployee(testEntity1)).thenReturn(testEmployee1);
+
+        // When
+        Employee result = employeeServerAdapter.loadEmployeeById(employeeId);
+
+        // Then
+        assertThat(result).isNotNull();
+        assertThat(result).isEqualTo(testEmployee1);
+        verify(employeeMapper).toEmployee(testEntity1);
+    }
+
+    @Test
+    void loadEmployeeById_shouldReturnNull_whenEmployeeNotFound() {
+        // Given
+        UUID nonExistentId = UUID.randomUUID();
+
+        when(restTemplate.exchange(
+                eq("http://localhost:8112/api/v1/employee/" + nonExistentId),
+                eq(HttpMethod.GET),
+                eq(null),
+                any(ParameterizedTypeReference.class)
+        )).thenThrow(new HttpClientErrorException(HttpStatus.NOT_FOUND));
+
+        // When
+        Employee result = employeeServerAdapter.loadEmployeeById(nonExistentId);
+
+        // Then
+        assertThat(result).isNull();
+    }
+
+    @Test
+    void loadEmployeeById_shouldReturnNull_whenResponseBodyIsNull() {
+        // Given
+        UUID employeeId = UUID.randomUUID();
+        ResponseEntity<EmployeeServerResponse<EmployeeEntity>> responseEntity =
+                new ResponseEntity<>(null, HttpStatus.OK);
+
+        when(restTemplate.exchange(
+                eq("http://localhost:8112/api/v1/employee/" + employeeId),
+                eq(HttpMethod.GET),
+                eq(null),
+                any(ParameterizedTypeReference.class)
+        )).thenReturn(responseEntity);
+
+        // When
+        Employee result = employeeServerAdapter.loadEmployeeById(employeeId);
+
+        // Then
+        assertThat(result).isNull();
+    }
+
+    @Test
+    void loadEmployeeById_shouldReturnNull_whenServerReturnsNon2xxStatus() {
+        // Given
+        UUID employeeId = UUID.randomUUID();
+        EmployeeServerResponse<EmployeeEntity> serverResponse = new EmployeeServerResponse<>();
+        serverResponse.setData(null);
+        serverResponse.setStatus("error");
+
+        ResponseEntity<EmployeeServerResponse<EmployeeEntity>> responseEntity =
+                new ResponseEntity<>(serverResponse, HttpStatus.INTERNAL_SERVER_ERROR);
+
+        when(restTemplate.exchange(
+                eq("http://localhost:8112/api/v1/employee/" + employeeId),
+                eq(HttpMethod.GET),
+                eq(null),
+                any(ParameterizedTypeReference.class)
+        )).thenReturn(responseEntity);
+
+        // When
+        Employee result = employeeServerAdapter.loadEmployeeById(employeeId);
+
+        // Then
+        assertThat(result).isNull();
+    }
+
+    @Test
+    void loadEmployeeById_shouldReturnNull_whenServerThrowsBadRequestException() {
+        // Given
+        UUID employeeId = UUID.randomUUID();
+
+        when(restTemplate.exchange(
+                eq("http://localhost:8112/api/v1/employee/" + employeeId),
+                eq(HttpMethod.GET),
+                eq(null),
+                any(ParameterizedTypeReference.class)
+        )).thenThrow(new HttpClientErrorException(HttpStatus.BAD_REQUEST));
+
+        // When
+        Employee result = employeeServerAdapter.loadEmployeeById(employeeId);
+
+        // Then
+        assertThat(result).isNull();
+    }
+
+    @Test
+    void loadEmployeeById_shouldReturnNull_whenServerThrowsUnauthorizedException() {
+        // Given
+        UUID employeeId = UUID.randomUUID();
+
+        when(restTemplate.exchange(
+                eq("http://localhost:8112/api/v1/employee/" + employeeId),
+                eq(HttpMethod.GET),
+                eq(null),
+                any(ParameterizedTypeReference.class)
+        )).thenThrow(new HttpClientErrorException(HttpStatus.UNAUTHORIZED));
+
+        // When
+        Employee result = employeeServerAdapter.loadEmployeeById(employeeId);
+
+        // Then
+        assertThat(result).isNull();
+    }
+}
