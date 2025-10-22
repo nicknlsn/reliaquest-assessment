@@ -1,0 +1,3 @@
+I used Claude Code to help with the tests and the UUID parameter validation in the controller. Everything else was written by me.
+
+I added caching to help with the rate limiting. With more time I would add exponential backoff and proper handling of 429 responses from the server.
