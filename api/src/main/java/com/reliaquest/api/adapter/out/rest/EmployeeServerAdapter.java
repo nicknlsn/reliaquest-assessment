@@ -4,16 +4,18 @@ import com.reliaquest.api.application.domain.model.Employee;
 import com.reliaquest.api.application.port.out.LoadEmployeeByIdPort;
 import com.reliaquest.api.application.port.out.LoadEmployeesPort;
 import com.reliaquest.api.common.OutAdapter;
-import java.util.List;
-import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
+
+import java.util.List;
+import java.util.UUID;
 
 @Slf4j
 @OutAdapter
@@ -26,12 +28,14 @@ public class EmployeeServerAdapter implements LoadEmployeesPort, LoadEmployeeByI
     private final EmployeeMapper employeeMapper;
 
     @Override
+    @Cacheable(cacheNames = "allEmployees")
     public List<Employee> loadAllEmployees() {
         List<Employee> employees = null;
 
         try {
             ResponseEntity<EmployeeServerResponse<List<EmployeeEntity>>> response = restTemplate.exchange(
-                    employeeServerUrl, HttpMethod.GET, null, new ParameterizedTypeReference<>() {});
+                    employeeServerUrl, HttpMethod.GET, null, new ParameterizedTypeReference<>() {
+                    });
 
             if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
                 employees = response.getBody().getData().stream()
@@ -47,13 +51,15 @@ public class EmployeeServerAdapter implements LoadEmployeesPort, LoadEmployeeByI
     }
 
     @Override
+    @Cacheable(cacheNames = "employeeById", key = "#id")
     public Employee loadEmployeeById(UUID id) {
         Employee employee = null;
 
         try {
             String url = String.format("%s/%s", employeeServerUrl, id.toString());
             ResponseEntity<EmployeeServerResponse<EmployeeEntity>> response =
-                    restTemplate.exchange(url, HttpMethod.GET, null, new ParameterizedTypeReference<>() {});
+                    restTemplate.exchange(url, HttpMethod.GET, null, new ParameterizedTypeReference<>() {
+                    });
 
             if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
                 employee = employeeMapper.toEmployee(response.getBody().getData());
