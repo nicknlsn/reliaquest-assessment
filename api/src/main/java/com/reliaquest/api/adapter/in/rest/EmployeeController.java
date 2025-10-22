@@ -2,6 +2,7 @@ package com.reliaquest.api.adapter.in.rest;
 
 import com.reliaquest.api.application.domain.model.Employee;
 import com.reliaquest.api.application.port.in.GetAllEmployeesUseCase;
+import com.reliaquest.api.application.port.in.GetEmployeeByIdUseCase;
 import com.reliaquest.api.application.port.in.GetEmployeesByNameSearchUseCase;
 import com.reliaquest.api.controller.IEmployeeController;
 import lombok.RequiredArgsConstructor;
@@ -14,6 +15,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
+import java.util.UUID;
 
 @Slf4j
 @RestController
@@ -23,6 +25,7 @@ public class EmployeeController implements IEmployeeController<Employee, String>
 
     private final GetAllEmployeesUseCase getAllEmployeesUseCase;
     private final GetEmployeesByNameSearchUseCase getEmployeesByNameSearchUseCase;
+    private final GetEmployeeByIdUseCase getEmployeeByIdUseCase;
 
     @Override
     @GetMapping
@@ -39,8 +42,10 @@ public class EmployeeController implements IEmployeeController<Employee, String>
     }
 
     @Override
-    public ResponseEntity<Employee> getEmployeeById(String id) {
-        return null;
+    @GetMapping("/{id}")
+    public ResponseEntity<Employee> getEmployeeById(@PathVariable String id) {
+        UUID uuid = UUID.fromString(id);
+        return new ResponseEntity<>(getEmployeeByIdUseCase.getEmployeeById(uuid), HttpStatus.OK);
     }
 
     @Override

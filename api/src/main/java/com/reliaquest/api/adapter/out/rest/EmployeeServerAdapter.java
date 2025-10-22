@@ -1,6 +1,7 @@
 package com.reliaquest.api.adapter.out.rest;
 
 import com.reliaquest.api.application.domain.model.Employee;
+import com.reliaquest.api.application.port.out.LoadEmployeeByIdPort;
 import com.reliaquest.api.application.port.out.LoadEmployeesPort;
 import com.reliaquest.api.common.OutAdapter;
 import lombok.RequiredArgsConstructor;
@@ -11,11 +12,12 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.client.RestTemplate;
 
 import java.util.List;
+import java.util.UUID;
 
 @Slf4j
 @OutAdapter
 @RequiredArgsConstructor
-public class EmployeeServerAdapter implements LoadEmployeesPort {
+public class EmployeeServerAdapter implements LoadEmployeesPort, LoadEmployeeByIdPort {
 
     private final String employeeServerUrl = "http://localhost:8112/api/v1/employee";
 
@@ -39,5 +41,25 @@ public class EmployeeServerAdapter implements LoadEmployeesPort {
         }
 
         return employees;
+    }
+
+    @Override
+    public Employee loadEmployeeById(UUID id) {
+        Employee employee = null;
+
+        try {
+            String url = String.format("%s/%s", employeeServerUrl, id.toString());
+            ResponseEntity<EmployeeServerResponse<EmployeeEntity>> response = restTemplate.exchange(url, HttpMethod.GET, null, new ParameterizedTypeReference<>() {
+            });
+
+            if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
+                employee = employeeMapper.toEmployee(response.getBody().getData());
+            }
+        } catch (Exception e) {
+            log.error("An error occurred while trying to load employee by id from Employee Server", e);
+            return null;
+        }
+
+        return employee;
     }
 }
