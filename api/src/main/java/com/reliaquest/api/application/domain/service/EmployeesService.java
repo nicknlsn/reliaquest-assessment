@@ -9,19 +9,19 @@ import com.reliaquest.api.application.port.in.GetTopTenEarnerNamesUseCase;
 import com.reliaquest.api.application.port.out.LoadEmployeeByIdPort;
 import com.reliaquest.api.application.port.out.LoadEmployeesPort;
 import com.reliaquest.api.common.UseCase;
-import lombok.RequiredArgsConstructor;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import lombok.RequiredArgsConstructor;
 
 @UseCase
 @RequiredArgsConstructor
 public class EmployeesService
         implements GetAllEmployeesUseCase,
-        GetEmployeesByNameSearchUseCase,
-        GetEmployeeByIdUseCase,
-        GetHighestSalaryUseCase, GetTopTenEarnerNamesUseCase {
+                GetEmployeesByNameSearchUseCase,
+                GetEmployeeByIdUseCase,
+                GetHighestSalaryUseCase,
+                GetTopTenEarnerNamesUseCase {
 
     private final LoadEmployeesPort loadEmployeesPort;
     private final LoadEmployeeByIdPort loadEmployeeByIdPort;

@@ -396,17 +396,18 @@ class EmployeesServiceTest {
         assertThat(result).isNotNull();
         assertThat(result).hasSize(10);
         // Highest earners should be Employee 15 down to Employee 6 (descending order by salary)
-        assertThat(result).containsExactly(
-                "Employee 15",
-                "Employee 14",
-                "Employee 13",
-                "Employee 12",
-                "Employee 11",
-                "Employee 10",
-                "Employee 9",
-                "Employee 8",
-                "Employee 7",
-                "Employee 6");
+        assertThat(result)
+                .containsExactly(
+                        "Employee 15",
+                        "Employee 14",
+                        "Employee 13",
+                        "Employee 12",
+                        "Employee 11",
+                        "Employee 10",
+                        "Employee 9",
+                        "Employee 8",
+                        "Employee 7",
+                        "Employee 6");
         verify(loadEmployeesPort).loadAllEmployees();
     }
 

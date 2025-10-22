@@ -409,8 +409,7 @@ class EmployeeControllerWebTest {
     }
 
     @Test
-    void getTopTenHighestEarningEmployeeNames_shouldReturnTopTenNames_whenMoreThanTenEmployeesExist()
-            throws Exception {
+    void getTopTenHighestEarningEmployeeNames_shouldReturnTopTenNames_whenMoreThanTenEmployeesExist() throws Exception {
         // Given
         List<String> topTenNames = Arrays.asList(
                 "Employee 1",
@@ -434,8 +433,7 @@ class EmployeeControllerWebTest {
     }
 
     @Test
-    void getTopTenHighestEarningEmployeeNames_shouldReturnAllNames_whenFewerThanTenEmployeesExist()
-            throws Exception {
+    void getTopTenHighestEarningEmployeeNames_shouldReturnAllNames_whenFewerThanTenEmployeesExist() throws Exception {
         // Given
         List<String> names = Arrays.asList("Alice Johnson", "Bob Smith", "Charlie Brown");
         when(getTopTenEarnerNamesUseCase.getTopTenEarnerNames()).thenReturn(names);
