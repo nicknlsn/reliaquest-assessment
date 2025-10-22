@@ -1,6 +1,7 @@
 package com.reliaquest.api.application.domain.service;
 
 import com.reliaquest.api.application.domain.model.Employee;
+import com.reliaquest.api.application.port.in.CreateEmployeeUseCase;
 import com.reliaquest.api.application.port.in.GetAllEmployeesUseCase;
 import com.reliaquest.api.application.port.in.GetEmployeeByIdUseCase;
 import com.reliaquest.api.application.port.in.GetEmployeesByNameSearchUseCase;
@@ -8,23 +9,26 @@ import com.reliaquest.api.application.port.in.GetHighestSalaryUseCase;
 import com.reliaquest.api.application.port.in.GetTopTenEarnerNamesUseCase;
 import com.reliaquest.api.application.port.out.LoadEmployeeByIdPort;
 import com.reliaquest.api.application.port.out.LoadEmployeesPort;
+import com.reliaquest.api.application.port.out.SaveNewEmployeePort;
 import com.reliaquest.api.common.UseCase;
+import lombok.RequiredArgsConstructor;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
-import lombok.RequiredArgsConstructor;
 
 @UseCase
 @RequiredArgsConstructor
 public class EmployeesService
         implements GetAllEmployeesUseCase,
-                GetEmployeesByNameSearchUseCase,
-                GetEmployeeByIdUseCase,
-                GetHighestSalaryUseCase,
-                GetTopTenEarnerNamesUseCase {
+        GetEmployeesByNameSearchUseCase,
+        GetEmployeeByIdUseCase,
+        GetHighestSalaryUseCase,
+        GetTopTenEarnerNamesUseCase, CreateEmployeeUseCase {
 
     private final LoadEmployeesPort loadEmployeesPort;
     private final LoadEmployeeByIdPort loadEmployeeByIdPort;
+    private final SaveNewEmployeePort saveNewEmployeePort;
 
     @Override
     public List<Employee> getAllEmployees() {
@@ -70,5 +74,10 @@ public class EmployeesService
                 .forEach(employee -> topTenEarnerNames.add(employee.getName()));
 
         return topTenEarnerNames;
+    }
+
+    @Override
+    public Employee createEmployee(Employee employee) {
+        return saveNewEmployeePort.saveNewEmployee(employee);
     }
 }

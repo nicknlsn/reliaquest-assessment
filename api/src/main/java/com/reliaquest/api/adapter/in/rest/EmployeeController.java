@@ -1,14 +1,13 @@
 package com.reliaquest.api.adapter.in.rest;
 
 import com.reliaquest.api.application.domain.model.Employee;
+import com.reliaquest.api.application.port.in.CreateEmployeeUseCase;
 import com.reliaquest.api.application.port.in.GetAllEmployeesUseCase;
 import com.reliaquest.api.application.port.in.GetEmployeeByIdUseCase;
 import com.reliaquest.api.application.port.in.GetEmployeesByNameSearchUseCase;
 import com.reliaquest.api.application.port.in.GetHighestSalaryUseCase;
 import com.reliaquest.api.application.port.in.GetTopTenEarnerNamesUseCase;
 import com.reliaquest.api.controller.IEmployeeController;
-import java.util.List;
-import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -19,17 +18,21 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.List;
+import java.util.UUID;
+
 @Slf4j
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("api/v1/employee")
-public class EmployeeController implements IEmployeeController<Employee, String> {
+public class EmployeeController implements IEmployeeController<Employee, Employee> {
 
     private final GetAllEmployeesUseCase getAllEmployeesUseCase;
     private final GetEmployeesByNameSearchUseCase getEmployeesByNameSearchUseCase;
     private final GetEmployeeByIdUseCase getEmployeeByIdUseCase;
     private final GetHighestSalaryUseCase getHighestSalaryUseCase;
     private final GetTopTenEarnerNamesUseCase getTopTenEarnerNamesUseCase;
+    private final CreateEmployeeUseCase createEmployeeUseCase;
 
     @Override
     @GetMapping
@@ -92,8 +95,9 @@ public class EmployeeController implements IEmployeeController<Employee, String>
 
     @Override
     @PostMapping
-    public ResponseEntity<Employee> createEmployee(String employeeInput) {
-        return null;
+    public ResponseEntity<Employee> createEmployee(Employee employeeInput) {
+        log.info("Request to create a new employee: {}", employeeInput);
+        return new ResponseEntity<>(createEmployeeUseCase.createEmployee(employeeInput), HttpStatus.CREATED);
     }
 
     @Override
