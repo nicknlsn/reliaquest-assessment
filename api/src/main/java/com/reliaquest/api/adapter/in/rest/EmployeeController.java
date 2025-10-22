@@ -2,11 +2,14 @@ package com.reliaquest.api.adapter.in.rest;
 
 import com.reliaquest.api.application.domain.model.Employee;
 import com.reliaquest.api.application.port.in.GetAllEmployeesUseCase;
+import com.reliaquest.api.application.port.in.GetEmployeesByNameSearchUseCase;
 import com.reliaquest.api.controller.IEmployeeController;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -19,15 +22,20 @@ import java.util.List;
 public class EmployeeController implements IEmployeeController<Employee, String> {
 
     private final GetAllEmployeesUseCase getAllEmployeesUseCase;
+    private final GetEmployeesByNameSearchUseCase getEmployeesByNameSearchUseCase;
 
     @Override
+    @GetMapping
     public ResponseEntity<List<Employee>> getAllEmployees() {
+        log.info("Request to get all employees");
         return new ResponseEntity<>(getAllEmployeesUseCase.getAllEmployees(), HttpStatus.OK);
     }
 
     @Override
-    public ResponseEntity<List<Employee>> getEmployeesByNameSearch(String searchString) {
-        return null;
+    @GetMapping("/search/{searchString}")
+    public ResponseEntity<List<Employee>> getEmployeesByNameSearch(@PathVariable String searchString) {
+        log.info("Request to get employees by name search with search string: {}", searchString);
+        return new ResponseEntity<>(getEmployeesByNameSearchUseCase.getEmployeeByNameSearch(searchString), HttpStatus.OK);
     }
 
     @Override
