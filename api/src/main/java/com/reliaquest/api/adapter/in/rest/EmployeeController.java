@@ -45,8 +45,27 @@ public class EmployeeController implements IEmployeeController<Employee, String>
     @GetMapping("/{id}")
     public ResponseEntity<Employee> getEmployeeById(@PathVariable String id) {
         log.info("Request to get employee by id {}", id);
-        UUID uuid = UUID.fromString(id);
+        UUID uuid = validateAndParseUUID(id);
         return new ResponseEntity<>(getEmployeeByIdUseCase.getEmployeeById(uuid), HttpStatus.OK);
+    }
+
+    /**
+     * Validates and parses a UUID string.
+     * This validation is performed at the controller level as recommended by Spring Boot best practices.
+     *
+     * @param id the string to validate and parse as UUID
+     * @return the parsed UUID
+     * @throws IllegalArgumentException if the string is not a valid UUID format
+     */
+    private UUID validateAndParseUUID(String id) {
+        if (id == null || id.trim().isEmpty()) {
+            throw new IllegalArgumentException("UUID cannot be null or empty");
+        }
+        try {
+            return UUID.fromString(id);
+        } catch (IllegalArgumentException e) {
+            throw new IllegalArgumentException("Invalid UUID format: " + id);
+        }
     }
 
     @Override

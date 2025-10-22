@@ -2,6 +2,7 @@ package com.reliaquest.api.adapter.in.rest;
 
 import com.reliaquest.api.application.domain.model.Employee;
 import com.reliaquest.api.application.port.in.GetAllEmployeesUseCase;
+import com.reliaquest.api.application.port.in.GetEmployeeByIdUseCase;
 import com.reliaquest.api.application.port.in.GetEmployeesByNameSearchUseCase;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -38,6 +39,9 @@ class EmployeeControllerWebTest {
 
     @MockBean
     private GetEmployeesByNameSearchUseCase getEmployeesByNameSearchUseCase;
+
+    @MockBean
+    private GetEmployeeByIdUseCase getEmployeeByIdUseCase;
 
     @Test
     void getAllEmployees_shouldReturnListOfEmployees_whenEmployeesExist() throws Exception {
@@ -239,5 +243,102 @@ class EmployeeControllerWebTest {
                 .andExpect(jsonPath("$[0].age", is(40)))
                 .andExpect(jsonPath("$[0].title", is("Senior Developer")))
                 .andExpect(jsonPath("$[0].email", is("patrick.obrien@example.com")));
+    }
+
+    @Test
+    void getEmployeeById_shouldReturnEmployee_whenValidUUIDProvided() throws Exception {
+        // Given
+        UUID employeeId = UUID.randomUUID();
+        Employee employee = Employee.builder()
+                .id(employeeId)
+                .name("John Doe")
+                .salary(75000)
+                .age(30)
+                .title("Software Engineer")
+                .email("john.doe@example.com")
+                .build();
+
+        when(getEmployeeByIdUseCase.getEmployeeById(employeeId)).thenReturn(employee);
+
+        // When & Then
+        mockMvc.perform(get("/api/v1/employee/{id}", employeeId.toString()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id", is(employeeId.toString())))
+                .andExpect(jsonPath("$.name", is("John Doe")))
+                .andExpect(jsonPath("$.salary", is(75000)))
+                .andExpect(jsonPath("$.age", is(30)))
+                .andExpect(jsonPath("$.title", is("Software Engineer")))
+                .andExpect(jsonPath("$.email", is("john.doe@example.com")));
+    }
+
+    @Test
+    void getEmployeeById_shouldReturnBadRequest_whenInvalidUUIDProvided() throws Exception {
+        // Given - Invalid UUID format
+        String invalidId = "not-a-uuid";
+
+        // When & Then
+        mockMvc.perform(get("/api/v1/employee/{id}", invalidId))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.status", is(400)))
+                .andExpect(jsonPath("$.error", is("Bad Request")));
+    }
+
+    @Test
+    void getEmployeeById_shouldReturnBadRequest_whenUUIDHasInvalidFormat() throws Exception {
+        // Given - Partially valid UUID format but incorrect
+        String invalidId = "123e4567-e89b-12d3-a456";
+
+        // When & Then
+        mockMvc.perform(get("/api/v1/employee/{id}", invalidId))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.status", is(400)))
+                .andExpect(jsonPath("$.error", is("Bad Request")));
+    }
+
+    @Test
+    void getEmployeeById_shouldReturnBadRequest_whenUUIDIsEmpty() throws Exception {
+        // Given - Empty string
+        String emptyId = "";
+
+        // When & Then - Note: Spring will match this to getAllEmployees instead due to routing
+        // So we test with whitespace instead
+        String whitespaceId = "   ";
+        mockMvc.perform(get("/api/v1/employee/{id}", whitespaceId))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void getEmployeeById_shouldReturnBadRequest_whenUUIDContainsSpecialCharacters() throws Exception {
+        // Given - UUID with invalid characters
+        String invalidId = "123e4567-e89b-12d3-a456-426614174000!";
+
+        // When & Then
+        mockMvc.perform(get("/api/v1/employee/{id}", invalidId))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.status", is(400)))
+                .andExpect(jsonPath("$.error", is("Bad Request")));
+    }
+
+    @Test
+    void getEmployeeById_shouldAcceptUppercaseUUID() throws Exception {
+        // Given - Valid UUID in uppercase
+        UUID employeeId = UUID.randomUUID();
+        String uppercaseId = employeeId.toString().toUpperCase();
+
+        Employee employee = Employee.builder()
+                .id(employeeId)
+                .name("Jane Smith")
+                .salary(85000)
+                .age(28)
+                .title("Senior Engineer")
+                .email("jane.smith@example.com")
+                .build();
+
+        when(getEmployeeByIdUseCase.getEmployeeById(employeeId)).thenReturn(employee);
+
+        // When & Then - UUID validation should accept uppercase format
+        mockMvc.perform(get("/api/v1/employee/{id}", uppercaseId))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.name", is("Jane Smith")));
     }
 }
