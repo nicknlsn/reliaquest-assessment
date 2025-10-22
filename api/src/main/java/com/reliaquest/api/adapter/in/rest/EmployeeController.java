@@ -44,6 +44,7 @@ public class EmployeeController implements IEmployeeController<Employee, String>
     @Override
     @GetMapping("/{id}")
     public ResponseEntity<Employee> getEmployeeById(@PathVariable String id) {
+        log.info("Request to get employee by id {}", id);
         UUID uuid = UUID.fromString(id);
         return new ResponseEntity<>(getEmployeeByIdUseCase.getEmployeeById(uuid), HttpStatus.OK);
     }
