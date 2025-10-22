@@ -405,14 +405,10 @@ class EmployeeServerAdapterTest {
     @Test
     void saveNewEmployee_shouldReturnNull_whenResponseBodyIsNull() {
         // Given
-        Employee inputEmployee = Employee.builder()
-                .name("New Employee")
-                .salary(90000)
-                .age(32)
-                .build();
+        Employee inputEmployee =
+                Employee.builder().name("New Employee").salary(90000).age(32).build();
 
-        ResponseEntity<EmployeeServerResponse<EmployeeEntity>> response =
-                new ResponseEntity<>(null, HttpStatus.OK);
+        ResponseEntity<EmployeeServerResponse<EmployeeEntity>> response = new ResponseEntity<>(null, HttpStatus.OK);
 
         when(restTemplate.exchange(
                         eq("http://localhost:8112/api/v1/employee"),
@@ -431,11 +427,8 @@ class EmployeeServerAdapterTest {
     @Test
     void saveNewEmployee_shouldReturnNull_whenServerReturnsNon2xxStatus() {
         // Given
-        Employee inputEmployee = Employee.builder()
-                .name("New Employee")
-                .salary(90000)
-                .age(32)
-                .build();
+        Employee inputEmployee =
+                Employee.builder().name("New Employee").salary(90000).age(32).build();
 
         EmployeeServerResponse<EmployeeEntity> serverResponse = new EmployeeServerResponse<>();
         serverResponse.setData(null);
@@ -461,11 +454,8 @@ class EmployeeServerAdapterTest {
     @Test
     void saveNewEmployee_shouldReturnNull_whenRestTemplateThrowsException() {
         // Given
-        Employee inputEmployee = Employee.builder()
-                .name("New Employee")
-                .salary(90000)
-                .age(32)
-                .build();
+        Employee inputEmployee =
+                Employee.builder().name("New Employee").salary(90000).age(32).build();
 
         when(restTemplate.exchange(
                         eq("http://localhost:8112/api/v1/employee"),
@@ -484,11 +474,8 @@ class EmployeeServerAdapterTest {
     @Test
     void saveNewEmployee_shouldReturnNull_whenServerThrowsUnauthorizedException() {
         // Given
-        Employee inputEmployee = Employee.builder()
-                .name("New Employee")
-                .salary(90000)
-                .age(32)
-                .build();
+        Employee inputEmployee =
+                Employee.builder().name("New Employee").salary(90000).age(32).build();
 
         when(restTemplate.exchange(
                         eq("http://localhost:8112/api/v1/employee"),

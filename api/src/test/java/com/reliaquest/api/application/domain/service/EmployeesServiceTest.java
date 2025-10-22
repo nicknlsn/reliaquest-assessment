@@ -621,11 +621,8 @@ class EmployeesServiceTest {
     @Test
     void createEmployee_shouldDelegateToPort() {
         // Arrange - Input does not include ID or email (server generates these)
-        Employee inputEmployee = Employee.builder()
-                .name("Test Employee")
-                .salary(75000)
-                .age(30)
-                .build();
+        Employee inputEmployee =
+                Employee.builder().name("Test Employee").salary(75000).age(30).build();
 
         Employee createdEmployee = Employee.builder()
                 .id(UUID.randomUUID())
@@ -650,11 +647,8 @@ class EmployeesServiceTest {
     @Test
     void createEmployee_shouldReturnNull_whenPortReturnsNull() {
         // Arrange
-        Employee inputEmployee = Employee.builder()
-                .name("Failed Employee")
-                .salary(60000)
-                .age(28)
-                .build();
+        Employee inputEmployee =
+                Employee.builder().name("Failed Employee").salary(60000).age(28).build();
 
         when(saveNewEmployeePort.saveNewEmployee(inputEmployee)).thenReturn(null);
 
