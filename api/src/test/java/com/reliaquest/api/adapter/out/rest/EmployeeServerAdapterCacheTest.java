@@ -593,7 +593,8 @@ class EmployeeServerAdapterCacheTest {
                         any(ParameterizedTypeReference.class));
 
         // Setup for saveNewEmployee to fail
-        Employee inputEmployee = Employee.builder().name("New Employee").salary(90000).age(32).build();
+        Employee inputEmployee =
+                Employee.builder().name("New Employee").salary(90000).age(32).build();
 
         when(restTemplate.exchange(
                         eq("http://localhost:8112/api/v1/employee"),
