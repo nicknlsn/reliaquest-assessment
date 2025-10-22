@@ -46,7 +46,8 @@ public class EmployeeController implements IEmployeeController<Employee, String>
     public ResponseEntity<Employee> getEmployeeById(@PathVariable String id) {
         log.info("Request to get employee by id {}", id);
         UUID uuid = validateAndParseUUID(id);
-        return new ResponseEntity<>(getEmployeeByIdUseCase.getEmployeeById(uuid), HttpStatus.OK);
+        Employee employee = getEmployeeByIdUseCase.getEmployeeById(uuid);
+        return employee == null ? new ResponseEntity<>(null, HttpStatus.NOT_FOUND) : new ResponseEntity<>(employee, HttpStatus.OK);
     }
 
     /**

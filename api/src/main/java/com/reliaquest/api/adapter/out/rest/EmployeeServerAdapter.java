@@ -8,7 +8,9 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 
 import java.util.List;
@@ -56,7 +58,11 @@ public class EmployeeServerAdapter implements LoadEmployeesPort, LoadEmployeeByI
                 employee = employeeMapper.toEmployee(response.getBody().getData());
             }
         } catch (Exception e) {
-            log.error("An error occurred while trying to load employee by id from Employee Server", e);
+            if (((HttpClientErrorException) e).getStatusCode() == HttpStatus.NOT_FOUND) {
+                log.info("Employee with id {} not found", id);
+            } else {
+                log.error("An error occurred while trying to load employee by id from Employee Server", e);
+            }
             return null;
         }
 
