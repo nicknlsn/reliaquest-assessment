@@ -272,6 +272,17 @@ class EmployeeControllerWebTest {
     }
 
     @Test
+    void getEmployeeById_shouldReturnNotFound_whenEmployeeDoesNotExist() throws Exception {
+        // Given - Valid UUID but employee doesn't exist
+        UUID nonExistentId = UUID.randomUUID();
+        when(getEmployeeByIdUseCase.getEmployeeById(nonExistentId)).thenReturn(null);
+
+        // When & Then
+        mockMvc.perform(get("/api/v1/employee/{id}", nonExistentId.toString()))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
     void getEmployeeById_shouldReturnBadRequest_whenInvalidUUIDProvided() throws Exception {
         // Given - Invalid UUID format
         String invalidId = "not-a-uuid";
