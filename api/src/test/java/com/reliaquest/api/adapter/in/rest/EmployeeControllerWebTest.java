@@ -11,6 +11,7 @@ import com.reliaquest.api.application.domain.model.Employee;
 import com.reliaquest.api.application.port.in.GetAllEmployeesUseCase;
 import com.reliaquest.api.application.port.in.GetEmployeeByIdUseCase;
 import com.reliaquest.api.application.port.in.GetEmployeesByNameSearchUseCase;
+import com.reliaquest.api.application.port.in.GetHighestSalaryUseCase;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -41,6 +42,9 @@ class EmployeeControllerWebTest {
 
     @MockBean
     private GetEmployeeByIdUseCase getEmployeeByIdUseCase;
+
+    @MockBean
+    private GetHighestSalaryUseCase getHighestSalaryUseCase;
 
     @Test
     void getAllEmployees_shouldReturnListOfEmployees_whenEmployeesExist() throws Exception {
@@ -350,5 +354,53 @@ class EmployeeControllerWebTest {
         mockMvc.perform(get("/api/v1/employee/{id}", uppercaseId))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.name", is("Jane Smith")));
+    }
+
+    @Test
+    void getHighestSalaryOfEmployees_shouldReturnHighestSalary_whenEmployeesExist() throws Exception {
+        // Given
+        Integer highestSalary = 95000;
+        when(getHighestSalaryUseCase.getHighestSalary()).thenReturn(highestSalary);
+
+        // When & Then
+        mockMvc.perform(get("/api/v1/employee/highestSalary"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", is(95000)));
+    }
+
+    @Test
+    void getHighestSalaryOfEmployees_shouldReturnNull_whenNoEmployeesExist() throws Exception {
+        // Given
+        when(getHighestSalaryUseCase.getHighestSalary()).thenReturn(null);
+
+        // When & Then
+        mockMvc.perform(get("/api/v1/employee/highestSalary"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$").doesNotExist());
+    }
+
+    @Test
+    void getHighestSalaryOfEmployees_shouldReturnZero_whenHighestSalaryIsZero() throws Exception {
+        // Given
+        Integer highestSalary = 0;
+        when(getHighestSalaryUseCase.getHighestSalary()).thenReturn(highestSalary);
+
+        // When & Then
+        mockMvc.perform(get("/api/v1/employee/highestSalary"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", is(0)));
+    }
+
+    @Test
+    void getHighestSalaryOfEmployees_shouldReturnHighestSalary_whenMultipleEmployeesWithDifferentSalaries()
+            throws Exception {
+        // Given
+        Integer highestSalary = 150000;
+        when(getHighestSalaryUseCase.getHighestSalary()).thenReturn(highestSalary);
+
+        // When & Then
+        mockMvc.perform(get("/api/v1/employee/highestSalary"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", is(150000)));
     }
 }

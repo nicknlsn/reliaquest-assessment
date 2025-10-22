@@ -264,4 +264,110 @@ class EmployeesServiceTest {
         assertThat(result).isEmpty();
         verify(loadEmployeesPort).loadAllEmployees();
     }
+
+    @Test
+    void getHighestSalary_shouldReturnHighestSalary_whenEmployeesExist() {
+        // Arrange
+        when(loadEmployeesPort.loadAllEmployees()).thenReturn(testEmployees);
+
+        // Act
+        Integer result = employeesService.getHighestSalary();
+
+        // Assert
+        assertThat(result).isNotNull();
+        assertThat(result).isEqualTo(95000); // Alice Johnson has the highest salary
+        verify(loadEmployeesPort).loadAllEmployees();
+    }
+
+    @Test
+    void getHighestSalary_shouldReturnNull_whenNoEmployeesExist() {
+        // Arrange
+        when(loadEmployeesPort.loadAllEmployees()).thenReturn(Collections.emptyList());
+
+        // Act
+        Integer result = employeesService.getHighestSalary();
+
+        // Assert
+        assertThat(result).isNull();
+        verify(loadEmployeesPort).loadAllEmployees();
+    }
+
+    @Test
+    void getHighestSalary_shouldReturnSalary_whenOnlyOneEmployeeExists() {
+        // Arrange
+        Employee singleEmployee = Employee.builder()
+                .id(UUID.randomUUID())
+                .name("Single Employee")
+                .salary(50000)
+                .age(25)
+                .title("Junior Developer")
+                .email("single@example.com")
+                .build();
+
+        when(loadEmployeesPort.loadAllEmployees()).thenReturn(Collections.singletonList(singleEmployee));
+
+        // Act
+        Integer result = employeesService.getHighestSalary();
+
+        // Assert
+        assertThat(result).isNotNull();
+        assertThat(result).isEqualTo(50000);
+        verify(loadEmployeesPort).loadAllEmployees();
+    }
+
+    @Test
+    void getHighestSalary_shouldReturnHighestSalary_whenMultipleEmployeesHaveSameSalary() {
+        // Arrange
+        Employee employee1 = Employee.builder()
+                .id(UUID.randomUUID())
+                .name("Employee One")
+                .salary(80000)
+                .age(30)
+                .title("Developer")
+                .email("employee1@example.com")
+                .build();
+
+        Employee employee2 = Employee.builder()
+                .id(UUID.randomUUID())
+                .name("Employee Two")
+                .salary(80000)
+                .age(28)
+                .title("Developer")
+                .email("employee2@example.com")
+                .build();
+
+        List<Employee> employeesWithSameSalary = Arrays.asList(employee1, employee2);
+        when(loadEmployeesPort.loadAllEmployees()).thenReturn(employeesWithSameSalary);
+
+        // Act
+        Integer result = employeesService.getHighestSalary();
+
+        // Assert
+        assertThat(result).isNotNull();
+        assertThat(result).isEqualTo(80000);
+        verify(loadEmployeesPort).loadAllEmployees();
+    }
+
+    @Test
+    void getHighestSalary_shouldHandleZeroSalary() {
+        // Arrange
+        Employee employee = Employee.builder()
+                .id(UUID.randomUUID())
+                .name("Volunteer")
+                .salary(0)
+                .age(22)
+                .title("Intern")
+                .email("volunteer@example.com")
+                .build();
+
+        when(loadEmployeesPort.loadAllEmployees()).thenReturn(Collections.singletonList(employee));
+
+        // Act
+        Integer result = employeesService.getHighestSalary();
+
+        // Assert
+        assertThat(result).isNotNull();
+        assertThat(result).isEqualTo(0);
+        verify(loadEmployeesPort).loadAllEmployees();
+    }
 }
