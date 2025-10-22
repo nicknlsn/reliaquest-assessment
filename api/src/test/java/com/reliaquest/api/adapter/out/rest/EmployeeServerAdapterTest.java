@@ -28,6 +28,10 @@ import org.springframework.web.client.RestTemplate;
 /**
  * Unit tests for EmployeeServerAdapter.
  * Tests the adapter layer that communicates with the external employee server.
+ *
+ * Note: These are pure unit tests using Mockito. They do NOT test caching behavior
+ * because @Mock bypasses Spring's proxy-based caching. For cache behavior tests,
+ * see EmployeeServerAdapterCacheTest.
  */
 @ExtendWith(MockitoExtension.class)
 class EmployeeServerAdapterTest {
