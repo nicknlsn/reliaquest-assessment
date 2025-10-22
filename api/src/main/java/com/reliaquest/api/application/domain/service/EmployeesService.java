@@ -26,7 +26,8 @@ public class EmployeesService
                 GetEmployeeByIdUseCase,
                 GetHighestSalaryUseCase,
                 GetTopTenEarnerNamesUseCase,
-                CreateEmployeeUseCase, DeleteEmployeeUseCase {
+                CreateEmployeeUseCase,
+                DeleteEmployeeUseCase {
 
     private final LoadEmployeesPort loadEmployeesPort;
     private final LoadEmployeeByIdPort loadEmployeeByIdPort;

@@ -613,8 +613,7 @@ class EmployeeControllerWebTest {
         when(deleteEmployeeUseCase.deleteEmployeeById(employeeId)).thenReturn(null);
 
         // When & Then
-        mockMvc.perform(delete("/api/v1/employee/" + employeeId))
-                .andExpect(status().isNotFound());
+        mockMvc.perform(delete("/api/v1/employee/" + employeeId)).andExpect(status().isNotFound());
     }
 
     @Test
@@ -623,8 +622,7 @@ class EmployeeControllerWebTest {
         String invalidId = "not-a-uuid";
 
         // When & Then
-        mockMvc.perform(delete("/api/v1/employee/" + invalidId))
-                .andExpect(status().isBadRequest());
+        mockMvc.perform(delete("/api/v1/employee/" + invalidId)).andExpect(status().isBadRequest());
     }
 
     @Test

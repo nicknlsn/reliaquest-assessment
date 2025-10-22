@@ -6,6 +6,8 @@ import com.reliaquest.api.application.port.out.LoadEmployeeByIdPort;
 import com.reliaquest.api.application.port.out.LoadEmployeesPort;
 import com.reliaquest.api.application.port.out.SaveNewEmployeePort;
 import com.reliaquest.api.common.OutAdapter;
+import java.util.List;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
@@ -19,13 +21,11 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 
-import java.util.List;
-import java.util.UUID;
-
 @Slf4j
 @OutAdapter
 @RequiredArgsConstructor
-public class EmployeeServerAdapter implements LoadEmployeesPort, LoadEmployeeByIdPort, SaveNewEmployeePort, DeleteEmployeePort {
+public class EmployeeServerAdapter
+        implements LoadEmployeesPort, LoadEmployeeByIdPort, SaveNewEmployeePort, DeleteEmployeePort {
     private final String employeeServerUrl = "http://localhost:8112/api/v1/employee";
 
     private final RestTemplate restTemplate;
@@ -39,8 +39,7 @@ public class EmployeeServerAdapter implements LoadEmployeesPort, LoadEmployeeByI
 
         try {
             ResponseEntity<EmployeeServerResponse<List<EmployeeEntity>>> response = restTemplate.exchange(
-                    employeeServerUrl, HttpMethod.GET, null, new ParameterizedTypeReference<>() {
-                    });
+                    employeeServerUrl, HttpMethod.GET, null, new ParameterizedTypeReference<>() {});
 
             if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
                 employees = response.getBody().getData().stream()
@@ -63,8 +62,7 @@ public class EmployeeServerAdapter implements LoadEmployeesPort, LoadEmployeeByI
         try {
             String url = String.format("%s/%s", employeeServerUrl, id.toString());
             ResponseEntity<EmployeeServerResponse<EmployeeEntity>> response =
-                    restTemplate.exchange(url, HttpMethod.GET, null, new ParameterizedTypeReference<>() {
-                    });
+                    restTemplate.exchange(url, HttpMethod.GET, null, new ParameterizedTypeReference<>() {});
 
             if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
                 employee = employeeMapper.toEmployee(response.getBody().getData());
@@ -91,8 +89,7 @@ public class EmployeeServerAdapter implements LoadEmployeesPort, LoadEmployeeByI
                     employeeServerUrl,
                     HttpMethod.POST,
                     new HttpEntity<>(employee),
-                    new ParameterizedTypeReference<>() {
-                    });
+                    new ParameterizedTypeReference<>() {});
 
             if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
                 newEmployee = employeeMapper.toEmployee(response.getBody().getData());
@@ -108,14 +105,14 @@ public class EmployeeServerAdapter implements LoadEmployeesPort, LoadEmployeeByI
     @Override
     @Caching(
             evict = {
-                    @CacheEvict(cacheNames = "allEmployees", allEntries = true),
-                    @CacheEvict(cacheNames = "employeeById", key = "#uuid")
-            }
-    )
+                @CacheEvict(cacheNames = "allEmployees", allEntries = true),
+                @CacheEvict(cacheNames = "employeeById", key = "#uuid")
+            })
     public String deleteEmployeeById(UUID uuid) {
         String deletedEmployee = null;
 
-        // this will skip caching because we're invoking this method from within the same class; but this is desired because it will ensure the employee exists before attempting to delete
+        // this will skip caching because we're invoking this method from within the same class; but this is desired
+        // because it will ensure the employee exists before attempting to delete
         Employee employeeToDelete = loadEmployeeById(uuid);
 
         if (employeeToDelete == null) {
@@ -124,12 +121,16 @@ public class EmployeeServerAdapter implements LoadEmployeesPort, LoadEmployeeByI
         }
 
         try {
-            // create a new employee object for the request body so that it only has the name, which is what the server expects
-            HttpEntity<Employee> requestEntity = new HttpEntity<>(Employee.builder().name(employeeToDelete.getName()).build());
-            ResponseEntity<EmployeeServerResponse<Boolean>> response = restTemplate.exchange(employeeServerUrl, HttpMethod.DELETE, requestEntity, new ParameterizedTypeReference<>() {
-            });
+            // create a new employee object for the request body so that it only has the name, which is what the server
+            // expects
+            HttpEntity<Employee> requestEntity = new HttpEntity<>(
+                    Employee.builder().name(employeeToDelete.getName()).build());
+            ResponseEntity<EmployeeServerResponse<Boolean>> response = restTemplate.exchange(
+                    employeeServerUrl, HttpMethod.DELETE, requestEntity, new ParameterizedTypeReference<>() {});
 
-            if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null && response.getBody().getData()) {
+            if (response.getStatusCode().is2xxSuccessful()
+                    && response.getBody() != null
+                    && response.getBody().getData()) {
                 deletedEmployee = employeeToDelete.getName();
             }
         } catch (Exception e) {
