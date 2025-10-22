@@ -18,6 +18,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.cache.CacheManager;
 import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -337,5 +338,174 @@ class EmployeeServerAdapterCacheTest {
                 .thenReturn(responseEntity);
 
         when(employeeMapper.toEmployee(testEntity1)).thenReturn(testEmployee1);
+    }
+
+    // saveNewEmployee cache eviction tests
+
+    @Test
+    void saveNewEmployee_shouldEvictAllEmployeesCache_whenEmployeeIsCreated() {
+        // Given - First populate the allEmployees cache
+        List<EmployeeEntity> entities = Arrays.asList(testEntity1);
+        EmployeeServerResponse<List<EmployeeEntity>> listServerResponse = new EmployeeServerResponse<>();
+        listServerResponse.setData(entities);
+        listServerResponse.setStatus("success");
+
+        ResponseEntity<EmployeeServerResponse<List<EmployeeEntity>>> listResponseEntity =
+                new ResponseEntity<>(listServerResponse, HttpStatus.OK);
+
+        when(restTemplate.exchange(
+                        eq("http://localhost:8112/api/v1/employee"),
+                        eq(HttpMethod.GET),
+                        eq(null),
+                        any(ParameterizedTypeReference.class)))
+                .thenReturn(listResponseEntity);
+
+        when(employeeMapper.toEmployee(testEntity1)).thenReturn(testEmployee1);
+
+        // Populate the cache
+        employeeServerAdapter.loadAllEmployees();
+
+        // Verify cache was populated (only 1 call so far)
+        verify(restTemplate, times(1))
+                .exchange(
+                        eq("http://localhost:8112/api/v1/employee"),
+                        eq(HttpMethod.GET),
+                        eq(null),
+                        any(ParameterizedTypeReference.class));
+
+        // Setup for saveNewEmployee
+        UUID newEmployeeId = UUID.randomUUID();
+        Employee inputEmployee = Employee.builder()
+                .name("New Employee")
+                .salary(90000)
+                .age(32)
+                .title("Tech Lead")
+                .build();
+
+        EmployeeEntity newEmployeeEntity = new EmployeeEntity();
+        newEmployeeEntity.setId(newEmployeeId);
+        newEmployeeEntity.setEmployee_name("New Employee");
+        newEmployeeEntity.setEmployee_salary(90000);
+        newEmployeeEntity.setEmployee_age(32);
+        newEmployeeEntity.setEmployee_title("Tech Lead");
+        newEmployeeEntity.setEmployee_email("new.employee@example.com");
+
+        Employee createdEmployee = Employee.builder()
+                .id(newEmployeeId)
+                .name("New Employee")
+                .salary(90000)
+                .age(32)
+                .title("Tech Lead")
+                .email("new.employee@example.com")
+                .build();
+
+        EmployeeServerResponse<EmployeeEntity> createServerResponse = new EmployeeServerResponse<>();
+        createServerResponse.setData(newEmployeeEntity);
+        createServerResponse.setStatus("success");
+
+        ResponseEntity<EmployeeServerResponse<EmployeeEntity>> createResponseEntity =
+                new ResponseEntity<>(createServerResponse, HttpStatus.OK);
+
+        when(restTemplate.exchange(
+                        eq("http://localhost:8112/api/v1/employee"),
+                        eq(HttpMethod.POST),
+                        any(HttpEntity.class),
+                        any(ParameterizedTypeReference.class)))
+                .thenReturn(createResponseEntity);
+
+        when(employeeMapper.toEmployee(newEmployeeEntity)).thenReturn(createdEmployee);
+
+        // When - Create a new employee (should evict allEmployees cache)
+        Employee result = employeeServerAdapter.saveNewEmployee(inputEmployee);
+
+        // Then - Verify employee was created
+        assertThat(result).isNotNull();
+        assertThat(result.getId()).isEqualTo(newEmployeeId);
+
+        // Now call loadAllEmployees again - it should hit the REST API again because cache was evicted
+        employeeServerAdapter.loadAllEmployees();
+
+        // Verify RestTemplate was called twice for GET all employees (once before, once after cache eviction)
+        verify(restTemplate, times(2))
+                .exchange(
+                        eq("http://localhost:8112/api/v1/employee"),
+                        eq(HttpMethod.GET),
+                        eq(null),
+                        any(ParameterizedTypeReference.class));
+    }
+
+    @Test
+    void saveNewEmployee_shouldNotAffectEmployeeByIdCache_whenEmployeeIsCreated() {
+        // Given - First populate the employeeById cache
+        UUID employeeId = testEntity1.getId();
+        setupLoadEmployeeByIdMock(employeeId);
+
+        // Populate the cache
+        employeeServerAdapter.loadEmployeeById(employeeId);
+
+        // Verify cache was populated (only 1 call so far)
+        verify(restTemplate, times(1))
+                .exchange(
+                        eq("http://localhost:8112/api/v1/employee/" + employeeId),
+                        eq(HttpMethod.GET),
+                        eq(null),
+                        any(ParameterizedTypeReference.class));
+
+        // Setup for saveNewEmployee
+        UUID newEmployeeId = UUID.randomUUID();
+        Employee inputEmployee = Employee.builder()
+                .name("New Employee")
+                .salary(90000)
+                .age(32)
+                .build();
+
+        EmployeeEntity newEmployeeEntity = new EmployeeEntity();
+        newEmployeeEntity.setId(newEmployeeId);
+        newEmployeeEntity.setEmployee_name("New Employee");
+        newEmployeeEntity.setEmployee_salary(90000);
+        newEmployeeEntity.setEmployee_age(32);
+        newEmployeeEntity.setEmployee_email("new.employee@example.com");
+
+        Employee createdEmployee = Employee.builder()
+                .id(newEmployeeId)
+                .name("New Employee")
+                .salary(90000)
+                .age(32)
+                .email("new.employee@example.com")
+                .build();
+
+        EmployeeServerResponse<EmployeeEntity> createServerResponse = new EmployeeServerResponse<>();
+        createServerResponse.setData(newEmployeeEntity);
+        createServerResponse.setStatus("success");
+
+        ResponseEntity<EmployeeServerResponse<EmployeeEntity>> createResponseEntity =
+                new ResponseEntity<>(createServerResponse, HttpStatus.OK);
+
+        when(restTemplate.exchange(
+                        eq("http://localhost:8112/api/v1/employee"),
+                        eq(HttpMethod.POST),
+                        any(HttpEntity.class),
+                        any(ParameterizedTypeReference.class)))
+                .thenReturn(createResponseEntity);
+
+        when(employeeMapper.toEmployee(newEmployeeEntity)).thenReturn(createdEmployee);
+
+        // When - Create a new employee
+        Employee result = employeeServerAdapter.saveNewEmployee(inputEmployee);
+
+        // Then - Verify employee was created
+        assertThat(result).isNotNull();
+
+        // Call loadEmployeeById again with the same ID - should still use cache
+        employeeServerAdapter.loadEmployeeById(employeeId);
+
+        // Verify RestTemplate was still only called once for the specific employee ID
+        // (cache should NOT have been evicted for employeeById)
+        verify(restTemplate, times(1))
+                .exchange(
+                        eq("http://localhost:8112/api/v1/employee/" + employeeId),
+                        eq(HttpMethod.GET),
+                        eq(null),
+                        any(ParameterizedTypeReference.class));
     }
 }
