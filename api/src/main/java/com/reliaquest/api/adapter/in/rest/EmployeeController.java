@@ -2,23 +2,26 @@ package com.reliaquest.api.adapter.in.rest;
 
 import com.reliaquest.api.application.domain.model.Employee;
 import com.reliaquest.api.application.port.in.CreateEmployeeUseCase;
+import com.reliaquest.api.application.port.in.DeleteEmployeeUseCase;
 import com.reliaquest.api.application.port.in.GetAllEmployeesUseCase;
 import com.reliaquest.api.application.port.in.GetEmployeeByIdUseCase;
 import com.reliaquest.api.application.port.in.GetEmployeesByNameSearchUseCase;
 import com.reliaquest.api.application.port.in.GetHighestSalaryUseCase;
 import com.reliaquest.api.application.port.in.GetTopTenEarnerNamesUseCase;
 import com.reliaquest.api.controller.IEmployeeController;
-import java.util.List;
-import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+
+import java.util.List;
+import java.util.UUID;
 
 @Slf4j
 @RestController
@@ -32,6 +35,7 @@ public class EmployeeController implements IEmployeeController<Employee, Employe
     private final GetHighestSalaryUseCase getHighestSalaryUseCase;
     private final GetTopTenEarnerNamesUseCase getTopTenEarnerNamesUseCase;
     private final CreateEmployeeUseCase createEmployeeUseCase;
+    private final DeleteEmployeeUseCase deleteEmployeeUseCase;
 
     @Override
     @GetMapping
@@ -100,7 +104,11 @@ public class EmployeeController implements IEmployeeController<Employee, Employe
     }
 
     @Override
-    public ResponseEntity<String> deleteEmployeeById(String id) {
-        return null;
+    @DeleteMapping("/{id}")
+    public ResponseEntity<String> deleteEmployeeById(@PathVariable String id) {
+        log.info("Request to delete employee by id {}", id);
+        UUID uuid = validateAndParseUUID(id);
+        String name = deleteEmployeeUseCase.deleteEmployeeById(uuid);
+        return name == null ? new ResponseEntity<>(null, HttpStatus.NOT_FOUND) : new ResponseEntity<>(name, HttpStatus.OK);
     }
 }
