@@ -2,12 +2,16 @@ package com.reliaquest.api.adapter.in.rest;
 
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.reliaquest.api.application.domain.model.Employee;
+import com.reliaquest.api.application.port.in.CreateEmployeeUseCase;
 import com.reliaquest.api.application.port.in.GetAllEmployeesUseCase;
 import com.reliaquest.api.application.port.in.GetEmployeeByIdUseCase;
 import com.reliaquest.api.application.port.in.GetEmployeesByNameSearchUseCase;
@@ -21,6 +25,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
 /**
@@ -49,6 +54,12 @@ class EmployeeControllerWebTest {
 
     @MockBean
     private GetTopTenEarnerNamesUseCase getTopTenEarnerNamesUseCase;
+
+    @MockBean
+    private CreateEmployeeUseCase createEmployeeUseCase;
+
+    @Autowired
+    private ObjectMapper objectMapper;
 
     @Test
     void getAllEmployees_shouldReturnListOfEmployees_whenEmployeesExist() throws Exception {
@@ -470,5 +481,106 @@ class EmployeeControllerWebTest {
         mockMvc.perform(get("/api/v1/employee/topTenHighestEarningEmployeeNames"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$", hasSize(10)));
+    }
+
+    // createEmployee tests
+
+    @Test
+    void createEmployee_shouldReturnCreatedEmployee_whenValidEmployeeProvided() throws Exception {
+        // Given - Input does not include ID or email (server generates these)
+        UUID newEmployeeId = UUID.randomUUID();
+        Employee inputEmployee = Employee.builder()
+                .name("New Employee")
+                .salary(90000)
+                .age(32)
+                .title("Tech Lead")
+                .build();
+
+        Employee createdEmployee = Employee.builder()
+                .id(newEmployeeId)
+                .name("New Employee")
+                .salary(90000)
+                .age(32)
+                .title("Tech Lead")
+                .email("new.employee@example.com")
+                .build();
+
+        when(createEmployeeUseCase.createEmployee(any(Employee.class))).thenReturn(createdEmployee);
+
+        // When & Then
+        mockMvc.perform(post("/api/v1/employee")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(inputEmployee)))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.id", is(newEmployeeId.toString())))
+                .andExpect(jsonPath("$.name", is("New Employee")))
+                .andExpect(jsonPath("$.salary", is(90000)))
+                .andExpect(jsonPath("$.age", is(32)))
+                .andExpect(jsonPath("$.title", is("Tech Lead")))
+                .andExpect(jsonPath("$.email", is("new.employee@example.com")));
+    }
+
+    @Test
+    void createEmployee_shouldReturnCreatedEmployee_whenEmployeeHasMinimumFields() throws Exception {
+        // Given - Input does not include ID or email (server generates these)
+        UUID newEmployeeId = UUID.randomUUID();
+        Employee inputEmployee = Employee.builder()
+                .name("Minimal Employee")
+                .salary(50000)
+                .age(25)
+                .build();
+
+        Employee createdEmployee = Employee.builder()
+                .id(newEmployeeId)
+                .name("Minimal Employee")
+                .salary(50000)
+                .age(25)
+                .email("minimal.employee@example.com")
+                .build();
+
+        when(createEmployeeUseCase.createEmployee(any(Employee.class))).thenReturn(createdEmployee);
+
+        // When & Then
+        mockMvc.perform(post("/api/v1/employee")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(inputEmployee)))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.id", is(newEmployeeId.toString())))
+                .andExpect(jsonPath("$.name", is("Minimal Employee")))
+                .andExpect(jsonPath("$.salary", is(50000)))
+                .andExpect(jsonPath("$.age", is(25)))
+                .andExpect(jsonPath("$.email", is("minimal.employee@example.com")));
+    }
+
+    @Test
+    void createEmployee_shouldReturnCreatedEmployee_whenEmployeeHasSpecialCharactersInName() throws Exception {
+        // Given - Input does not include ID or email (server generates these)
+        UUID newEmployeeId = UUID.randomUUID();
+        Employee inputEmployee = Employee.builder()
+                .name("Seán O'Brien-Smith")
+                .salary(75000)
+                .age(30)
+                .title("Developer")
+                .build();
+
+        Employee createdEmployee = Employee.builder()
+                .id(newEmployeeId)
+                .name("Seán O'Brien-Smith")
+                .salary(75000)
+                .age(30)
+                .title("Developer")
+                .email("sean.obrien@example.com")
+                .build();
+
+        when(createEmployeeUseCase.createEmployee(any(Employee.class))).thenReturn(createdEmployee);
+
+        // When & Then
+        mockMvc.perform(post("/api/v1/employee")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(inputEmployee)))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.id", is(newEmployeeId.toString())))
+                .andExpect(jsonPath("$.name", is("Seán O'Brien-Smith")))
+                .andExpect(jsonPath("$.email", is("sean.obrien@example.com")));
     }
 }

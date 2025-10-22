@@ -6,6 +6,7 @@ import static org.mockito.Mockito.when;
 
 import com.reliaquest.api.application.domain.model.Employee;
 import com.reliaquest.api.application.port.out.LoadEmployeesPort;
+import com.reliaquest.api.application.port.out.SaveNewEmployeePort;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -29,6 +30,9 @@ class EmployeesServiceTest {
 
     @Mock
     private LoadEmployeesPort loadEmployeesPort;
+
+    @Mock
+    private SaveNewEmployeePort saveNewEmployeePort;
 
     @InjectMocks
     private EmployeesService employeesService;
@@ -574,5 +578,91 @@ class EmployeesServiceTest {
         assertThat(result).isNotNull();
         assertThat(result).hasSize(10);
         verify(loadEmployeesPort).loadAllEmployees();
+    }
+
+    // createEmployee tests
+
+    @Test
+    void createEmployee_shouldReturnCreatedEmployee_whenValidEmployeeProvided() {
+        // Arrange - Input does not include ID or email (server generates these)
+        UUID newEmployeeId = UUID.randomUUID();
+        Employee inputEmployee = Employee.builder()
+                .name("New Employee")
+                .salary(90000)
+                .age(32)
+                .title("Tech Lead")
+                .build();
+
+        Employee createdEmployee = Employee.builder()
+                .id(newEmployeeId)
+                .name("New Employee")
+                .salary(90000)
+                .age(32)
+                .title("Tech Lead")
+                .email("new.employee@example.com")
+                .build();
+
+        when(saveNewEmployeePort.saveNewEmployee(inputEmployee)).thenReturn(createdEmployee);
+
+        // Act
+        Employee result = employeesService.createEmployee(inputEmployee);
+
+        // Assert
+        assertThat(result).isNotNull();
+        assertThat(result.getId()).isEqualTo(newEmployeeId);
+        assertThat(result.getName()).isEqualTo("New Employee");
+        assertThat(result.getSalary()).isEqualTo(90000);
+        assertThat(result.getAge()).isEqualTo(32);
+        assertThat(result.getTitle()).isEqualTo("Tech Lead");
+        assertThat(result.getEmail()).isEqualTo("new.employee@example.com");
+        verify(saveNewEmployeePort).saveNewEmployee(inputEmployee);
+    }
+
+    @Test
+    void createEmployee_shouldDelegateToPort() {
+        // Arrange - Input does not include ID or email (server generates these)
+        Employee inputEmployee = Employee.builder()
+                .name("Test Employee")
+                .salary(75000)
+                .age(30)
+                .build();
+
+        Employee createdEmployee = Employee.builder()
+                .id(UUID.randomUUID())
+                .name("Test Employee")
+                .salary(75000)
+                .age(30)
+                .email("test.employee@example.com")
+                .build();
+
+        when(saveNewEmployeePort.saveNewEmployee(inputEmployee)).thenReturn(createdEmployee);
+
+        // Act
+        Employee result = employeesService.createEmployee(inputEmployee);
+
+        // Assert
+        assertThat(result).isEqualTo(createdEmployee);
+        assertThat(result.getId()).isNotNull();
+        assertThat(result.getEmail()).isNotNull();
+        verify(saveNewEmployeePort).saveNewEmployee(inputEmployee);
+    }
+
+    @Test
+    void createEmployee_shouldReturnNull_whenPortReturnsNull() {
+        // Arrange
+        Employee inputEmployee = Employee.builder()
+                .name("Failed Employee")
+                .salary(60000)
+                .age(28)
+                .build();
+
+        when(saveNewEmployeePort.saveNewEmployee(inputEmployee)).thenReturn(null);
+
+        // Act
+        Employee result = employeesService.createEmployee(inputEmployee);
+
+        // Assert
+        assertThat(result).isNull();
+        verify(saveNewEmployeePort).saveNewEmployee(inputEmployee);
     }
 }

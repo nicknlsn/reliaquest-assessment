@@ -18,6 +18,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -339,6 +340,165 @@ class EmployeeServerAdapterTest {
 
         // When
         Employee result = employeeServerAdapter.loadEmployeeById(employeeId);
+
+        // Then
+        assertThat(result).isNull();
+    }
+
+    // saveNewEmployee tests
+
+    @Test
+    void saveNewEmployee_shouldReturnCreatedEmployee_whenServerReturnsSuccessfulResponse() {
+        // Given - Input does not include ID or email (server generates these)
+        UUID newEmployeeId = UUID.randomUUID();
+        Employee inputEmployee = Employee.builder()
+                .name("New Employee")
+                .salary(90000)
+                .age(32)
+                .title("Tech Lead")
+                .build();
+
+        EmployeeEntity responseEntity = new EmployeeEntity();
+        responseEntity.setId(newEmployeeId);
+        responseEntity.setEmployee_name("New Employee");
+        responseEntity.setEmployee_salary(90000);
+        responseEntity.setEmployee_age(32);
+        responseEntity.setEmployee_title("Tech Lead");
+        responseEntity.setEmployee_email("new.employee@example.com");
+
+        Employee expectedEmployee = Employee.builder()
+                .id(newEmployeeId)
+                .name("New Employee")
+                .salary(90000)
+                .age(32)
+                .title("Tech Lead")
+                .email("new.employee@example.com")
+                .build();
+
+        EmployeeServerResponse<EmployeeEntity> serverResponse = new EmployeeServerResponse<>();
+        serverResponse.setData(responseEntity);
+        serverResponse.setStatus("success");
+
+        ResponseEntity<EmployeeServerResponse<EmployeeEntity>> response =
+                new ResponseEntity<>(serverResponse, HttpStatus.OK);
+
+        when(restTemplate.exchange(
+                        eq("http://localhost:8112/api/v1/employee"),
+                        eq(HttpMethod.POST),
+                        any(HttpEntity.class),
+                        any(ParameterizedTypeReference.class)))
+                .thenReturn(response);
+
+        when(employeeMapper.toEmployee(responseEntity)).thenReturn(expectedEmployee);
+
+        // When
+        Employee result = employeeServerAdapter.saveNewEmployee(inputEmployee);
+
+        // Then
+        assertThat(result).isNotNull();
+        assertThat(result).isEqualTo(expectedEmployee);
+        assertThat(result.getId()).isNotNull();
+        assertThat(result.getEmail()).isNotNull();
+        verify(employeeMapper).toEmployee(responseEntity);
+    }
+
+    @Test
+    void saveNewEmployee_shouldReturnNull_whenResponseBodyIsNull() {
+        // Given
+        Employee inputEmployee = Employee.builder()
+                .name("New Employee")
+                .salary(90000)
+                .age(32)
+                .build();
+
+        ResponseEntity<EmployeeServerResponse<EmployeeEntity>> response =
+                new ResponseEntity<>(null, HttpStatus.OK);
+
+        when(restTemplate.exchange(
+                        eq("http://localhost:8112/api/v1/employee"),
+                        eq(HttpMethod.POST),
+                        any(HttpEntity.class),
+                        any(ParameterizedTypeReference.class)))
+                .thenReturn(response);
+
+        // When
+        Employee result = employeeServerAdapter.saveNewEmployee(inputEmployee);
+
+        // Then
+        assertThat(result).isNull();
+    }
+
+    @Test
+    void saveNewEmployee_shouldReturnNull_whenServerReturnsNon2xxStatus() {
+        // Given
+        Employee inputEmployee = Employee.builder()
+                .name("New Employee")
+                .salary(90000)
+                .age(32)
+                .build();
+
+        EmployeeServerResponse<EmployeeEntity> serverResponse = new EmployeeServerResponse<>();
+        serverResponse.setData(null);
+        serverResponse.setStatus("error");
+
+        ResponseEntity<EmployeeServerResponse<EmployeeEntity>> response =
+                new ResponseEntity<>(serverResponse, HttpStatus.INTERNAL_SERVER_ERROR);
+
+        when(restTemplate.exchange(
+                        eq("http://localhost:8112/api/v1/employee"),
+                        eq(HttpMethod.POST),
+                        any(HttpEntity.class),
+                        any(ParameterizedTypeReference.class)))
+                .thenReturn(response);
+
+        // When
+        Employee result = employeeServerAdapter.saveNewEmployee(inputEmployee);
+
+        // Then
+        assertThat(result).isNull();
+    }
+
+    @Test
+    void saveNewEmployee_shouldReturnNull_whenRestTemplateThrowsException() {
+        // Given
+        Employee inputEmployee = Employee.builder()
+                .name("New Employee")
+                .salary(90000)
+                .age(32)
+                .build();
+
+        when(restTemplate.exchange(
+                        eq("http://localhost:8112/api/v1/employee"),
+                        eq(HttpMethod.POST),
+                        any(HttpEntity.class),
+                        any(ParameterizedTypeReference.class)))
+                .thenThrow(new HttpClientErrorException(HttpStatus.BAD_REQUEST));
+
+        // When
+        Employee result = employeeServerAdapter.saveNewEmployee(inputEmployee);
+
+        // Then
+        assertThat(result).isNull();
+    }
+
+    @Test
+    void saveNewEmployee_shouldReturnNull_whenServerThrowsUnauthorizedException() {
+        // Given
+        Employee inputEmployee = Employee.builder()
+                .name("New Employee")
+                .salary(90000)
+                .age(32)
+                .build();
+
+        when(restTemplate.exchange(
+                        eq("http://localhost:8112/api/v1/employee"),
+                        eq(HttpMethod.POST),
+                        any(HttpEntity.class),
+                        any(ParameterizedTypeReference.class)))
+                .thenThrow(new HttpClientErrorException(HttpStatus.UNAUTHORIZED));
+
+        // When
+        Employee result = employeeServerAdapter.saveNewEmployee(inputEmployee);
 
         // Then
         assertThat(result).isNull();
