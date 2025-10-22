@@ -4,6 +4,7 @@ import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -12,6 +13,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.reliaquest.api.application.domain.model.Employee;
 import com.reliaquest.api.application.port.in.CreateEmployeeUseCase;
+import com.reliaquest.api.application.port.in.DeleteEmployeeUseCase;
 import com.reliaquest.api.application.port.in.GetAllEmployeesUseCase;
 import com.reliaquest.api.application.port.in.GetEmployeeByIdUseCase;
 import com.reliaquest.api.application.port.in.GetEmployeesByNameSearchUseCase;
@@ -57,6 +59,9 @@ class EmployeeControllerWebTest {
 
     @MockBean
     private CreateEmployeeUseCase createEmployeeUseCase;
+
+    @MockBean
+    private DeleteEmployeeUseCase deleteEmployeeUseCase;
 
     @Autowired
     private ObjectMapper objectMapper;
@@ -582,5 +587,53 @@ class EmployeeControllerWebTest {
                 .andExpect(jsonPath("$.id", is(newEmployeeId.toString())))
                 .andExpect(jsonPath("$.name", is("Seán O'Brien-Smith")))
                 .andExpect(jsonPath("$.email", is("sean.obrien@example.com")));
+    }
+
+    // deleteEmployeeById tests
+
+    @Test
+    void deleteEmployeeById_shouldReturnEmployeeName_whenEmployeeIsDeleted() throws Exception {
+        // Given
+        UUID employeeId = UUID.randomUUID();
+        String deletedEmployeeName = "John Doe";
+
+        when(deleteEmployeeUseCase.deleteEmployeeById(employeeId)).thenReturn(deletedEmployeeName);
+
+        // When & Then
+        mockMvc.perform(delete("/api/v1/employee/" + employeeId))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", is(deletedEmployeeName)));
+    }
+
+    @Test
+    void deleteEmployeeById_shouldReturn404_whenEmployeeNotFound() throws Exception {
+        // Given
+        UUID employeeId = UUID.randomUUID();
+
+        when(deleteEmployeeUseCase.deleteEmployeeById(employeeId)).thenReturn(null);
+
+        // When & Then
+        mockMvc.perform(delete("/api/v1/employee/" + employeeId))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void deleteEmployeeById_shouldReturn400_whenIdIsInvalidUUID() throws Exception {
+        // Given
+        String invalidId = "not-a-uuid";
+
+        // When & Then
+        mockMvc.perform(delete("/api/v1/employee/" + invalidId))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void deleteEmployeeById_shouldReturn400_whenIdIsEmpty() throws Exception {
+        // Given
+        String emptyId = "";
+
+        // When & Then
+        mockMvc.perform(delete("/api/v1/employee/" + emptyId))
+                .andExpect(status().isNotFound()); // Spring returns 404 for empty path variable
     }
 }

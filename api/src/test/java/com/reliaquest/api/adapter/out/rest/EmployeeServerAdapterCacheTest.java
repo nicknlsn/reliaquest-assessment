@@ -22,6 +22,7 @@ import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 
 /**
@@ -501,6 +502,180 @@ class EmployeeServerAdapterCacheTest {
         verify(restTemplate, times(1))
                 .exchange(
                         eq("http://localhost:8112/api/v1/employee/" + employeeId),
+                        eq(HttpMethod.GET),
+                        eq(null),
+                        any(ParameterizedTypeReference.class));
+    }
+
+    // deleteEmployeeById cache eviction tests
+
+    @Test
+    void deleteEmployeeById_shouldEvictBothCaches_whenEmployeeIsDeleted() {
+        // Given - First populate both caches
+        UUID employeeId = testEntity1.getId();
+
+        // Populate allEmployees cache
+        List<EmployeeEntity> entities = Arrays.asList(testEntity1);
+        EmployeeServerResponse<List<EmployeeEntity>> listServerResponse = new EmployeeServerResponse<>();
+        listServerResponse.setData(entities);
+        listServerResponse.setStatus("success");
+
+        ResponseEntity<EmployeeServerResponse<List<EmployeeEntity>>> listResponseEntity =
+                new ResponseEntity<>(listServerResponse, HttpStatus.OK);
+
+        when(restTemplate.exchange(
+                        eq("http://localhost:8112/api/v1/employee"),
+                        eq(HttpMethod.GET),
+                        eq(null),
+                        any(ParameterizedTypeReference.class)))
+                .thenReturn(listResponseEntity);
+
+        when(employeeMapper.toEmployee(testEntity1)).thenReturn(testEmployee1);
+
+        // Call to populate allEmployees cache
+        employeeServerAdapter.loadAllEmployees();
+
+        // Populate employeeById cache
+        setupLoadEmployeeByIdMock(employeeId);
+        employeeServerAdapter.loadEmployeeById(employeeId);
+
+        // Verify caches were populated (only 1 call each so far)
+        verify(restTemplate, times(1))
+                .exchange(
+                        eq("http://localhost:8112/api/v1/employee"),
+                        eq(HttpMethod.GET),
+                        eq(null),
+                        any(ParameterizedTypeReference.class));
+
+        verify(restTemplate, times(1))
+                .exchange(
+                        eq("http://localhost:8112/api/v1/employee/" + employeeId),
+                        eq(HttpMethod.GET),
+                        eq(null),
+                        any(ParameterizedTypeReference.class));
+
+        // Setup for deleteEmployeeById - need to mock the GET call inside deleteEmployeeById
+        when(restTemplate.exchange(
+                        eq("http://localhost:8112/api/v1/employee/" + employeeId),
+                        eq(HttpMethod.GET),
+                        eq(null),
+                        any(ParameterizedTypeReference.class)))
+                .thenReturn(new ResponseEntity<>(
+                        new EmployeeServerResponse<EmployeeEntity>() {
+                            {
+                                setData(testEntity1);
+                                setStatus("success");
+                            }
+                        },
+                        HttpStatus.OK));
+
+        EmployeeServerResponse<Boolean> deleteServerResponse = new EmployeeServerResponse<>();
+        deleteServerResponse.setData(true);
+        deleteServerResponse.setStatus("success");
+
+        ResponseEntity<EmployeeServerResponse<Boolean>> deleteResponseEntity =
+                new ResponseEntity<>(deleteServerResponse, HttpStatus.OK);
+
+        when(restTemplate.exchange(
+                        eq("http://localhost:8112/api/v1/employee"),
+                        eq(HttpMethod.DELETE),
+                        any(HttpEntity.class),
+                        any(ParameterizedTypeReference.class)))
+                .thenReturn(deleteResponseEntity);
+
+        // When - Delete the employee (should evict both caches)
+        String result = employeeServerAdapter.deleteEmployeeById(employeeId);
+
+        // Then - Verify employee was deleted
+        assertThat(result).isNotNull();
+        assertThat(result).isEqualTo("John Doe");
+
+        // Now call loadAllEmployees and loadEmployeeById again - both should hit REST API again
+        employeeServerAdapter.loadAllEmployees();
+        employeeServerAdapter.loadEmployeeById(employeeId);
+
+        // Verify RestTemplate was called again for both (cache eviction worked)
+        // allEmployees: 1 before delete + 1 after delete = 2
+        verify(restTemplate, times(2))
+                .exchange(
+                        eq("http://localhost:8112/api/v1/employee"),
+                        eq(HttpMethod.GET),
+                        eq(null),
+                        any(ParameterizedTypeReference.class));
+
+        // employeeById: 1 before delete + 1 inside delete (not cached) + 1 after delete = 3
+        verify(restTemplate, times(3))
+                .exchange(
+                        eq("http://localhost:8112/api/v1/employee/" + employeeId),
+                        eq(HttpMethod.GET),
+                        eq(null),
+                        any(ParameterizedTypeReference.class));
+    }
+
+    @Test
+    void deleteEmployeeById_shouldStillEvictAllEmployeesCache_whenEmployeeNotFound() {
+        // Given - Populate the caches
+        UUID employeeId = UUID.randomUUID();
+        UUID differentEmployeeId = testEntity1.getId();
+
+        // Populate allEmployees cache
+        List<EmployeeEntity> entities = Arrays.asList(testEntity1);
+        EmployeeServerResponse<List<EmployeeEntity>> listServerResponse = new EmployeeServerResponse<>();
+        listServerResponse.setData(entities);
+        listServerResponse.setStatus("success");
+
+        ResponseEntity<EmployeeServerResponse<List<EmployeeEntity>>> listResponseEntity =
+                new ResponseEntity<>(listServerResponse, HttpStatus.OK);
+
+        when(restTemplate.exchange(
+                        eq("http://localhost:8112/api/v1/employee"),
+                        eq(HttpMethod.GET),
+                        eq(null),
+                        any(ParameterizedTypeReference.class)))
+                .thenReturn(listResponseEntity);
+
+        when(employeeMapper.toEmployee(testEntity1)).thenReturn(testEmployee1);
+
+        // Call to populate allEmployees cache
+        employeeServerAdapter.loadAllEmployees();
+
+        // Populate employeeById cache with a different employee
+        setupLoadEmployeeByIdMock(differentEmployeeId);
+        employeeServerAdapter.loadEmployeeById(differentEmployeeId);
+
+        // Setup for deleteEmployeeById - employee not found
+        when(restTemplate.exchange(
+                        eq("http://localhost:8112/api/v1/employee/" + employeeId),
+                        eq(HttpMethod.GET),
+                        eq(null),
+                        any(ParameterizedTypeReference.class)))
+                .thenThrow(new HttpClientErrorException(HttpStatus.NOT_FOUND));
+
+        // When - Try to delete non-existent employee
+        // Note: @CacheEvict annotation executes even when method returns early,
+        // so allEmployees cache WILL be evicted, but employeeById cache for the specific ID won't be affected
+        String result = employeeServerAdapter.deleteEmployeeById(employeeId);
+
+        // Then - Verify employee was not deleted
+        assertThat(result).isNull();
+
+        // Call loadAllEmployees and loadEmployeeById again with different ID
+        employeeServerAdapter.loadAllEmployees();
+        employeeServerAdapter.loadEmployeeById(differentEmployeeId);
+
+        // allEmployees cache was evicted, so it should be called again (2 times total)
+        verify(restTemplate, times(2))
+                .exchange(
+                        eq("http://localhost:8112/api/v1/employee"),
+                        eq(HttpMethod.GET),
+                        eq(null),
+                        any(ParameterizedTypeReference.class));
+
+        // employeeById cache for differentEmployeeId was NOT evicted (different ID),
+        // so it should still be called only once
+        verify(restTemplate, times(1))
+                .exchange(
+                        eq("http://localhost:8112/api/v1/employee/" + differentEmployeeId),
                         eq(HttpMethod.GET),
                         eq(null),
                         any(ParameterizedTypeReference.class));

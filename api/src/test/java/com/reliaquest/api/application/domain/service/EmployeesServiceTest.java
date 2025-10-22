@@ -5,6 +5,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.reliaquest.api.application.domain.model.Employee;
+import com.reliaquest.api.application.port.out.DeleteEmployeePort;
 import com.reliaquest.api.application.port.out.LoadEmployeesPort;
 import com.reliaquest.api.application.port.out.SaveNewEmployeePort;
 import java.util.ArrayList;
@@ -33,6 +34,9 @@ class EmployeesServiceTest {
 
     @Mock
     private SaveNewEmployeePort saveNewEmployeePort;
+
+    @Mock
+    private DeleteEmployeePort deleteEmployeePort;
 
     @InjectMocks
     private EmployeesService employeesService;
@@ -658,5 +662,55 @@ class EmployeesServiceTest {
         // Assert
         assertThat(result).isNull();
         verify(saveNewEmployeePort).saveNewEmployee(inputEmployee);
+    }
+
+    // deleteEmployeeById tests
+
+    @Test
+    void deleteEmployeeById_shouldReturnEmployeeName_whenEmployeeIsDeleted() {
+        // Arrange
+        UUID employeeId = UUID.randomUUID();
+        String deletedEmployeeName = "John Doe";
+
+        when(deleteEmployeePort.deleteEmployeeById(employeeId)).thenReturn(deletedEmployeeName);
+
+        // Act
+        String result = employeesService.deleteEmployeeById(employeeId);
+
+        // Assert
+        assertThat(result).isNotNull();
+        assertThat(result).isEqualTo(deletedEmployeeName);
+        verify(deleteEmployeePort).deleteEmployeeById(employeeId);
+    }
+
+    @Test
+    void deleteEmployeeById_shouldDelegateToPort() {
+        // Arrange
+        UUID employeeId = UUID.randomUUID();
+        String expectedName = "Test Employee";
+
+        when(deleteEmployeePort.deleteEmployeeById(employeeId)).thenReturn(expectedName);
+
+        // Act
+        String result = employeesService.deleteEmployeeById(employeeId);
+
+        // Assert
+        assertThat(result).isEqualTo(expectedName);
+        verify(deleteEmployeePort).deleteEmployeeById(employeeId);
+    }
+
+    @Test
+    void deleteEmployeeById_shouldReturnNull_whenPortReturnsNull() {
+        // Arrange
+        UUID employeeId = UUID.randomUUID();
+
+        when(deleteEmployeePort.deleteEmployeeById(employeeId)).thenReturn(null);
+
+        // Act
+        String result = employeesService.deleteEmployeeById(employeeId);
+
+        // Assert
+        assertThat(result).isNull();
+        verify(deleteEmployeePort).deleteEmployeeById(employeeId);
     }
 }

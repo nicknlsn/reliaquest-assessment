@@ -490,4 +490,233 @@ class EmployeeServerAdapterTest {
         // Then
         assertThat(result).isNull();
     }
+
+    // deleteEmployeeById tests
+
+    @Test
+    void deleteEmployeeById_shouldReturnEmployeeName_whenEmployeeIsDeletedSuccessfully() {
+        // Given
+        UUID employeeId = UUID.randomUUID();
+
+        EmployeeEntity employeeEntity = new EmployeeEntity();
+        employeeEntity.setId(employeeId);
+        employeeEntity.setEmployee_name("John Doe");
+        employeeEntity.setEmployee_salary(75000);
+        employeeEntity.setEmployee_age(30);
+        employeeEntity.setEmployee_title("Software Engineer");
+        employeeEntity.setEmployee_email("john.doe@example.com");
+
+        Employee employee = Employee.builder()
+                .id(employeeId)
+                .name("John Doe")
+                .salary(75000)
+                .age(30)
+                .title("Software Engineer")
+                .email("john.doe@example.com")
+                .build();
+
+        EmployeeServerResponse<EmployeeEntity> getServerResponse = new EmployeeServerResponse<>();
+        getServerResponse.setData(employeeEntity);
+        getServerResponse.setStatus("success");
+
+        ResponseEntity<EmployeeServerResponse<EmployeeEntity>> getResponseEntity =
+                new ResponseEntity<>(getServerResponse, HttpStatus.OK);
+
+        when(restTemplate.exchange(
+                        eq("http://localhost:8112/api/v1/employee/" + employeeId),
+                        eq(HttpMethod.GET),
+                        eq(null),
+                        any(ParameterizedTypeReference.class)))
+                .thenReturn(getResponseEntity);
+
+        when(employeeMapper.toEmployee(employeeEntity)).thenReturn(employee);
+
+        EmployeeServerResponse<Boolean> deleteServerResponse = new EmployeeServerResponse<>();
+        deleteServerResponse.setData(true);
+        deleteServerResponse.setStatus("success");
+
+        ResponseEntity<EmployeeServerResponse<Boolean>> deleteResponseEntity =
+                new ResponseEntity<>(deleteServerResponse, HttpStatus.OK);
+
+        when(restTemplate.exchange(
+                        eq("http://localhost:8112/api/v1/employee"),
+                        eq(HttpMethod.DELETE),
+                        any(HttpEntity.class),
+                        any(ParameterizedTypeReference.class)))
+                .thenReturn(deleteResponseEntity);
+
+        // When
+        String result = employeeServerAdapter.deleteEmployeeById(employeeId);
+
+        // Then
+        assertThat(result).isNotNull();
+        assertThat(result).isEqualTo("John Doe");
+    }
+
+    @Test
+    void deleteEmployeeById_shouldReturnNull_whenEmployeeNotFound() {
+        // Given
+        UUID employeeId = UUID.randomUUID();
+
+        when(restTemplate.exchange(
+                        eq("http://localhost:8112/api/v1/employee/" + employeeId),
+                        eq(HttpMethod.GET),
+                        eq(null),
+                        any(ParameterizedTypeReference.class)))
+                .thenThrow(new HttpClientErrorException(HttpStatus.NOT_FOUND));
+
+        // When
+        String result = employeeServerAdapter.deleteEmployeeById(employeeId);
+
+        // Then
+        assertThat(result).isNull();
+    }
+
+    @Test
+    void deleteEmployeeById_shouldReturnNull_whenDeleteOperationFails() {
+        // Given
+        UUID employeeId = UUID.randomUUID();
+
+        EmployeeEntity employeeEntity = new EmployeeEntity();
+        employeeEntity.setId(employeeId);
+        employeeEntity.setEmployee_name("John Doe");
+
+        Employee employee = Employee.builder()
+                .id(employeeId)
+                .name("John Doe")
+                .salary(75000)
+                .age(30)
+                .build();
+
+        EmployeeServerResponse<EmployeeEntity> getServerResponse = new EmployeeServerResponse<>();
+        getServerResponse.setData(employeeEntity);
+        getServerResponse.setStatus("success");
+
+        ResponseEntity<EmployeeServerResponse<EmployeeEntity>> getResponseEntity =
+                new ResponseEntity<>(getServerResponse, HttpStatus.OK);
+
+        when(restTemplate.exchange(
+                        eq("http://localhost:8112/api/v1/employee/" + employeeId),
+                        eq(HttpMethod.GET),
+                        eq(null),
+                        any(ParameterizedTypeReference.class)))
+                .thenReturn(getResponseEntity);
+
+        when(employeeMapper.toEmployee(employeeEntity)).thenReturn(employee);
+
+        when(restTemplate.exchange(
+                        eq("http://localhost:8112/api/v1/employee"),
+                        eq(HttpMethod.DELETE),
+                        any(HttpEntity.class),
+                        any(ParameterizedTypeReference.class)))
+                .thenThrow(new HttpClientErrorException(HttpStatus.BAD_REQUEST));
+
+        // When
+        String result = employeeServerAdapter.deleteEmployeeById(employeeId);
+
+        // Then
+        assertThat(result).isNull();
+    }
+
+    @Test
+    void deleteEmployeeById_shouldReturnNull_whenDeleteResponseReturnsFalse() {
+        // Given
+        UUID employeeId = UUID.randomUUID();
+
+        EmployeeEntity employeeEntity = new EmployeeEntity();
+        employeeEntity.setId(employeeId);
+        employeeEntity.setEmployee_name("John Doe");
+
+        Employee employee = Employee.builder()
+                .id(employeeId)
+                .name("John Doe")
+                .salary(75000)
+                .age(30)
+                .build();
+
+        EmployeeServerResponse<EmployeeEntity> getServerResponse = new EmployeeServerResponse<>();
+        getServerResponse.setData(employeeEntity);
+        getServerResponse.setStatus("success");
+
+        ResponseEntity<EmployeeServerResponse<EmployeeEntity>> getResponseEntity =
+                new ResponseEntity<>(getServerResponse, HttpStatus.OK);
+
+        when(restTemplate.exchange(
+                        eq("http://localhost:8112/api/v1/employee/" + employeeId),
+                        eq(HttpMethod.GET),
+                        eq(null),
+                        any(ParameterizedTypeReference.class)))
+                .thenReturn(getResponseEntity);
+
+        when(employeeMapper.toEmployee(employeeEntity)).thenReturn(employee);
+
+        EmployeeServerResponse<Boolean> deleteServerResponse = new EmployeeServerResponse<>();
+        deleteServerResponse.setData(false);
+        deleteServerResponse.setStatus("success");
+
+        ResponseEntity<EmployeeServerResponse<Boolean>> deleteResponseEntity =
+                new ResponseEntity<>(deleteServerResponse, HttpStatus.OK);
+
+        when(restTemplate.exchange(
+                        eq("http://localhost:8112/api/v1/employee"),
+                        eq(HttpMethod.DELETE),
+                        any(HttpEntity.class),
+                        any(ParameterizedTypeReference.class)))
+                .thenReturn(deleteResponseEntity);
+
+        // When
+        String result = employeeServerAdapter.deleteEmployeeById(employeeId);
+
+        // Then
+        assertThat(result).isNull();
+    }
+
+    @Test
+    void deleteEmployeeById_shouldReturnNull_whenDeleteResponseBodyIsNull() {
+        // Given
+        UUID employeeId = UUID.randomUUID();
+
+        EmployeeEntity employeeEntity = new EmployeeEntity();
+        employeeEntity.setId(employeeId);
+        employeeEntity.setEmployee_name("John Doe");
+
+        Employee employee = Employee.builder()
+                .id(employeeId)
+                .name("John Doe")
+                .salary(75000)
+                .age(30)
+                .build();
+
+        EmployeeServerResponse<EmployeeEntity> getServerResponse = new EmployeeServerResponse<>();
+        getServerResponse.setData(employeeEntity);
+        getServerResponse.setStatus("success");
+
+        ResponseEntity<EmployeeServerResponse<EmployeeEntity>> getResponseEntity =
+                new ResponseEntity<>(getServerResponse, HttpStatus.OK);
+
+        when(restTemplate.exchange(
+                        eq("http://localhost:8112/api/v1/employee/" + employeeId),
+                        eq(HttpMethod.GET),
+                        eq(null),
+                        any(ParameterizedTypeReference.class)))
+                .thenReturn(getResponseEntity);
+
+        when(employeeMapper.toEmployee(employeeEntity)).thenReturn(employee);
+
+        ResponseEntity<EmployeeServerResponse<Boolean>> deleteResponseEntity =
+                new ResponseEntity<>(null, HttpStatus.OK);
+
+        when(restTemplate.exchange(
+                        eq("http://localhost:8112/api/v1/employee"),
+                        eq(HttpMethod.DELETE),
+                        any(HttpEntity.class),
+                        any(ParameterizedTypeReference.class)))
+                .thenReturn(deleteResponseEntity);
+
+        // When
+        String result = employeeServerAdapter.deleteEmployeeById(employeeId);
+
+        // Then
+        assertThat(result).isNull();
+    }
 }
