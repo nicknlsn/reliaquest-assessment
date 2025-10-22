@@ -453,11 +453,8 @@ class EmployeeServerAdapterCacheTest {
 
         // Setup for saveNewEmployee
         UUID newEmployeeId = UUID.randomUUID();
-        Employee inputEmployee = Employee.builder()
-                .name("New Employee")
-                .salary(90000)
-                .age(32)
-                .build();
+        Employee inputEmployee =
+                Employee.builder().name("New Employee").salary(90000).age(32).build();
 
         EmployeeEntity newEmployeeEntity = new EmployeeEntity();
         newEmployeeEntity.setId(newEmployeeId);
