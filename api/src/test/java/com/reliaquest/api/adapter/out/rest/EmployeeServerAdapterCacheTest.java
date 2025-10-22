@@ -294,6 +294,60 @@ class EmployeeServerAdapterCacheTest {
         assertThat(result2).isEqualTo(testEmployee1);
     }
 
+    @Test
+    void loadAllEmployees_shouldNotCacheNullResult_whenServerReturnsError() {
+        // Given - Server returns error resulting in null
+        when(restTemplate.exchange(
+                        eq("http://localhost:8112/api/v1/employee"),
+                        eq(HttpMethod.GET),
+                        eq(null),
+                        any(ParameterizedTypeReference.class)))
+                .thenThrow(new RuntimeException("Server error"));
+
+        // When - Call method multiple times with error
+        List<Employee> result1 = employeeServerAdapter.loadAllEmployees();
+        List<Employee> result2 = employeeServerAdapter.loadAllEmployees();
+
+        // Then - RestTemplate should be called each time (null results not cached)
+        verify(restTemplate, times(2))
+                .exchange(
+                        eq("http://localhost:8112/api/v1/employee"),
+                        eq(HttpMethod.GET),
+                        eq(null),
+                        any(ParameterizedTypeReference.class));
+
+        assertThat(result1).isNull();
+        assertThat(result2).isNull();
+    }
+
+    @Test
+    void loadEmployeeById_shouldNotCacheNullResult_whenEmployeeNotFound() {
+        // Given - Employee not found
+        UUID employeeId = UUID.randomUUID();
+
+        when(restTemplate.exchange(
+                        eq("http://localhost:8112/api/v1/employee/" + employeeId),
+                        eq(HttpMethod.GET),
+                        eq(null),
+                        any(ParameterizedTypeReference.class)))
+                .thenThrow(new HttpClientErrorException(HttpStatus.NOT_FOUND));
+
+        // When - Call method multiple times
+        Employee result1 = employeeServerAdapter.loadEmployeeById(employeeId);
+        Employee result2 = employeeServerAdapter.loadEmployeeById(employeeId);
+
+        // Then - RestTemplate should be called each time (null results not cached)
+        verify(restTemplate, times(2))
+                .exchange(
+                        eq("http://localhost:8112/api/v1/employee/" + employeeId),
+                        eq(HttpMethod.GET),
+                        eq(null),
+                        any(ParameterizedTypeReference.class));
+
+        assertThat(result1).isNull();
+        assertThat(result2).isNull();
+    }
+
     // Helper methods
 
     private void setupAndCallLoadAllEmployees() {
@@ -507,6 +561,65 @@ class EmployeeServerAdapterCacheTest {
                         any(ParameterizedTypeReference.class));
     }
 
+    @Test
+    void saveNewEmployee_shouldNotEvictCache_whenOperationFails() {
+        // Given - First populate the allEmployees cache
+        List<EmployeeEntity> entities = Arrays.asList(testEntity1);
+        EmployeeServerResponse<List<EmployeeEntity>> listServerResponse = new EmployeeServerResponse<>();
+        listServerResponse.setData(entities);
+        listServerResponse.setStatus("success");
+
+        ResponseEntity<EmployeeServerResponse<List<EmployeeEntity>>> listResponseEntity =
+                new ResponseEntity<>(listServerResponse, HttpStatus.OK);
+
+        when(restTemplate.exchange(
+                        eq("http://localhost:8112/api/v1/employee"),
+                        eq(HttpMethod.GET),
+                        eq(null),
+                        any(ParameterizedTypeReference.class)))
+                .thenReturn(listResponseEntity);
+
+        when(employeeMapper.toEmployee(testEntity1)).thenReturn(testEmployee1);
+
+        // Populate the cache
+        employeeServerAdapter.loadAllEmployees();
+
+        // Verify cache was populated (only 1 call so far)
+        verify(restTemplate, times(1))
+                .exchange(
+                        eq("http://localhost:8112/api/v1/employee"),
+                        eq(HttpMethod.GET),
+                        eq(null),
+                        any(ParameterizedTypeReference.class));
+
+        // Setup for saveNewEmployee to fail
+        Employee inputEmployee = Employee.builder().name("New Employee").salary(90000).age(32).build();
+
+        when(restTemplate.exchange(
+                        eq("http://localhost:8112/api/v1/employee"),
+                        eq(HttpMethod.POST),
+                        any(HttpEntity.class),
+                        any(ParameterizedTypeReference.class)))
+                .thenThrow(new HttpClientErrorException(HttpStatus.BAD_REQUEST));
+
+        // When - Try to create employee (will fail and return null)
+        Employee result = employeeServerAdapter.saveNewEmployee(inputEmployee);
+
+        // Then - Verify operation failed
+        assertThat(result).isNull();
+
+        // Call loadAllEmployees again - should still use cache (NOT evicted due to condition)
+        employeeServerAdapter.loadAllEmployees();
+
+        // Verify RestTemplate was still only called once for GET all employees (cache NOT evicted)
+        verify(restTemplate, times(1))
+                .exchange(
+                        eq("http://localhost:8112/api/v1/employee"),
+                        eq(HttpMethod.GET),
+                        eq(null),
+                        any(ParameterizedTypeReference.class));
+    }
+
     // deleteEmployeeById cache eviction tests
 
     @Test
@@ -613,7 +726,7 @@ class EmployeeServerAdapterCacheTest {
     }
 
     @Test
-    void deleteEmployeeById_shouldStillEvictAllEmployeesCache_whenEmployeeNotFound() {
+    void deleteEmployeeById_shouldNotEvictCaches_whenEmployeeNotFound() {
         // Given - Populate the caches
         UUID employeeId = UUID.randomUUID();
         UUID differentEmployeeId = testEntity1.getId();
@@ -652,8 +765,7 @@ class EmployeeServerAdapterCacheTest {
                 .thenThrow(new HttpClientErrorException(HttpStatus.NOT_FOUND));
 
         // When - Try to delete non-existent employee
-        // Note: @CacheEvict annotation executes even when method returns early,
-        // so allEmployees cache WILL be evicted, but employeeById cache for the specific ID won't be affected
+        // Note: With condition="#result != null", caches will NOT be evicted when method returns null
         String result = employeeServerAdapter.deleteEmployeeById(employeeId);
 
         // Then - Verify employee was not deleted
@@ -663,16 +775,14 @@ class EmployeeServerAdapterCacheTest {
         employeeServerAdapter.loadAllEmployees();
         employeeServerAdapter.loadEmployeeById(differentEmployeeId);
 
-        // allEmployees cache was evicted, so it should be called again (2 times total)
-        verify(restTemplate, times(2))
+        // Both caches should still be intact (NOT evicted due to null result)
+        verify(restTemplate, times(1))
                 .exchange(
                         eq("http://localhost:8112/api/v1/employee"),
                         eq(HttpMethod.GET),
                         eq(null),
                         any(ParameterizedTypeReference.class));
 
-        // employeeById cache for differentEmployeeId was NOT evicted (different ID),
-        // so it should still be called only once
         verify(restTemplate, times(1))
                 .exchange(
                         eq("http://localhost:8112/api/v1/employee/" + differentEmployeeId),

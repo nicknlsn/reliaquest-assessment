@@ -33,7 +33,7 @@ public class EmployeeServerAdapter
     private final EmployeeMapper employeeMapper;
 
     @Override
-    @Cacheable(cacheNames = "allEmployees")
+    @Cacheable(cacheNames = "allEmployees", unless = "#result == null")
     public List<Employee> loadAllEmployees() {
         List<Employee> employees = null;
 
@@ -55,7 +55,7 @@ public class EmployeeServerAdapter
     }
 
     @Override
-    @Cacheable(cacheNames = "employeeById", key = "#id")
+    @Cacheable(cacheNames = "employeeById", key = "#id", unless = "#result == null")
     public Employee loadEmployeeById(UUID id) {
         Employee employee = null;
 
@@ -80,7 +80,7 @@ public class EmployeeServerAdapter
     }
 
     @Override
-    @CacheEvict(cacheNames = "allEmployees", allEntries = true)
+    @CacheEvict(cacheNames = "allEmployees", allEntries = true, condition = "#result != null")
     public Employee saveNewEmployee(Employee employee) {
         Employee newEmployee = null;
 
@@ -105,8 +105,8 @@ public class EmployeeServerAdapter
     @Override
     @Caching(
             evict = {
-                @CacheEvict(cacheNames = "allEmployees", allEntries = true),
-                @CacheEvict(cacheNames = "employeeById", key = "#uuid")
+                @CacheEvict(cacheNames = "allEmployees", allEntries = true, condition = "#result != null"),
+                @CacheEvict(cacheNames = "employeeById", key = "#uuid", condition = "#result != null")
             })
     public String deleteEmployeeById(UUID uuid) {
         String deletedEmployee = null;
