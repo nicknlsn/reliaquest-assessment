@@ -158,7 +158,7 @@ class EmployeeControllerWebTest {
                 .build();
 
         List<Employee> employees = Arrays.asList(employee1, employee2);
-        when(getEmployeesByNameSearchUseCase.getEmployeeByNameSearch(searchString))
+        when(getEmployeesByNameSearchUseCase.getEmployeesByNameSearch(searchString))
                 .thenReturn(employees);
 
         // When & Then
@@ -183,7 +183,7 @@ class EmployeeControllerWebTest {
     void getEmployeesByNameSearch_shouldReturnEmptyList_whenNoEmployeesMatch() throws Exception {
         // Given
         String searchString = "NonExistent";
-        when(getEmployeesByNameSearchUseCase.getEmployeeByNameSearch(searchString))
+        when(getEmployeesByNameSearchUseCase.getEmployeesByNameSearch(searchString))
                 .thenReturn(Collections.emptyList());
 
         // When & Then
@@ -208,7 +208,7 @@ class EmployeeControllerWebTest {
                 .build();
 
         List<Employee> employees = Collections.singletonList(employee);
-        when(getEmployeesByNameSearchUseCase.getEmployeeByNameSearch(searchString))
+        when(getEmployeesByNameSearchUseCase.getEmployeesByNameSearch(searchString))
                 .thenReturn(employees);
 
         // When & Then
@@ -239,7 +239,7 @@ class EmployeeControllerWebTest {
                 .build();
 
         List<Employee> employees = Collections.singletonList(employee);
-        when(getEmployeesByNameSearchUseCase.getEmployeeByNameSearch(searchString))
+        when(getEmployeesByNameSearchUseCase.getEmployeesByNameSearch(searchString))
                 .thenReturn(employees);
 
         // When & Then

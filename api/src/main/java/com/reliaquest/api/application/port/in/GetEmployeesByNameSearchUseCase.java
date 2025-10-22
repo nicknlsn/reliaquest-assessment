@@ -5,5 +5,5 @@ import java.util.List;
 
 public interface GetEmployeesByNameSearchUseCase {
 
-    List<Employee> getEmployeeByNameSearch(String name);
+    List<Employee> getEmployeesByNameSearch(String name);
 }

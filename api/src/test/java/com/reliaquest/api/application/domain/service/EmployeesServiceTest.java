@@ -107,12 +107,12 @@ class EmployeesServiceTest {
     }
 
     @Test
-    void getEmployeeByNameSearch_shouldReturnMatchingEmployees_whenSearchStringMatchesMultiple() {
+    void getEmployeesByNameSearch_shouldReturnMatchingEmployees_whenSearchStringMatchesMultiple() {
         // Arrange
         when(loadEmployeesPort.loadAllEmployees()).thenReturn(testEmployees);
 
         // Act
-        List<Employee> result = employeesService.getEmployeeByNameSearch("John");
+        List<Employee> result = employeesService.getEmployeesByNameSearch("John");
 
         // Assert
         assertThat(result).isNotNull();
@@ -124,14 +124,14 @@ class EmployeesServiceTest {
     }
 
     @Test
-    void getEmployeeByNameSearch_shouldBeCaseInsensitive() {
+    void getEmployeesByNameSearch_shouldBeCaseInsensitive() {
         // Arrange
         when(loadEmployeesPort.loadAllEmployees()).thenReturn(testEmployees);
 
         // Act - Search with different cases
-        List<Employee> resultLowerCase = employeesService.getEmployeeByNameSearch("john");
-        List<Employee> resultUpperCase = employeesService.getEmployeeByNameSearch("JOHN");
-        List<Employee> resultMixedCase = employeesService.getEmployeeByNameSearch("JoHn");
+        List<Employee> resultLowerCase = employeesService.getEmployeesByNameSearch("john");
+        List<Employee> resultUpperCase = employeesService.getEmployeesByNameSearch("JOHN");
+        List<Employee> resultMixedCase = employeesService.getEmployeesByNameSearch("JoHn");
 
         // Assert - All should return the same results
         assertThat(resultLowerCase).hasSize(3);
@@ -142,12 +142,12 @@ class EmployeesServiceTest {
     }
 
     @Test
-    void getEmployeeByNameSearch_shouldReturnEmptyList_whenNoEmployeesMatch() {
+    void getEmployeesByNameSearch_shouldReturnEmptyList_whenNoEmployeesMatch() {
         // Arrange
         when(loadEmployeesPort.loadAllEmployees()).thenReturn(testEmployees);
 
         // Act
-        List<Employee> result = employeesService.getEmployeeByNameSearch("NonExistentName");
+        List<Employee> result = employeesService.getEmployeesByNameSearch("NonExistentName");
 
         // Assert
         assertThat(result).isNotNull();
@@ -156,12 +156,12 @@ class EmployeesServiceTest {
     }
 
     @Test
-    void getEmployeeByNameSearch_shouldReturnSingleEmployee_whenOnlyOneMatches() {
+    void getEmployeeByNameSearch_shouldReturnSingleEmployees_whenOnlyOneMatches() {
         // Arrange
         when(loadEmployeesPort.loadAllEmployees()).thenReturn(testEmployees);
 
         // Act
-        List<Employee> result = employeesService.getEmployeeByNameSearch("Jane");
+        List<Employee> result = employeesService.getEmployeesByNameSearch("Jane");
 
         // Assert
         assertThat(result).isNotNull();
@@ -171,12 +171,12 @@ class EmployeesServiceTest {
     }
 
     @Test
-    void getEmployeeByNameSearch_shouldMatchPartialName() {
+    void getEmployeesByNameSearch_shouldMatchPartialName() {
         // Arrange
         when(loadEmployeesPort.loadAllEmployees()).thenReturn(testEmployees);
 
         // Act
-        List<Employee> result = employeesService.getEmployeeByNameSearch("son");
+        List<Employee> result = employeesService.getEmployeesByNameSearch("son");
 
         // Assert
         assertThat(result).isNotNull();
@@ -186,12 +186,12 @@ class EmployeesServiceTest {
     }
 
     @Test
-    void getEmployeeByNameSearch_shouldReturnAllEmployees_whenSearchStringIsEmpty() {
+    void getEmployeesByNameSearch_shouldReturnAllEmployees_whenSearchStringIsEmpty() {
         // Arrange
         when(loadEmployeesPort.loadAllEmployees()).thenReturn(testEmployees);
 
         // Act
-        List<Employee> result = employeesService.getEmployeeByNameSearch("");
+        List<Employee> result = employeesService.getEmployeesByNameSearch("");
 
         // Assert
         assertThat(result).isNotNull();
@@ -201,12 +201,12 @@ class EmployeesServiceTest {
     }
 
     @Test
-    void getEmployeeByNameSearch_shouldMatchFirstName() {
+    void getEmployeesByNameSearch_shouldMatchFirstName() {
         // Arrange
         when(loadEmployeesPort.loadAllEmployees()).thenReturn(testEmployees);
 
         // Act
-        List<Employee> result = employeesService.getEmployeeByNameSearch("Alice");
+        List<Employee> result = employeesService.getEmployeesByNameSearch("Alice");
 
         // Assert
         assertThat(result).isNotNull();
@@ -215,12 +215,12 @@ class EmployeesServiceTest {
     }
 
     @Test
-    void getEmployeeByNameSearch_shouldMatchLastName() {
+    void getEmployeesByNameSearch_shouldMatchLastName() {
         // Arrange
         when(loadEmployeesPort.loadAllEmployees()).thenReturn(testEmployees);
 
         // Act
-        List<Employee> result = employeesService.getEmployeeByNameSearch("Smith");
+        List<Employee> result = employeesService.getEmployeesByNameSearch("Smith");
 
         // Assert
         assertThat(result).isNotNull();
@@ -229,7 +229,7 @@ class EmployeesServiceTest {
     }
 
     @Test
-    void getEmployeeByNameSearch_shouldHandleSpecialCharacters() {
+    void getEmployeesByNameSearch_shouldHandleSpecialCharacters() {
         // Arrange
         Employee specialEmployee = Employee.builder()
                 .id(UUID.randomUUID())
@@ -244,7 +244,7 @@ class EmployeesServiceTest {
         when(loadEmployeesPort.loadAllEmployees()).thenReturn(employeesWithSpecialChars);
 
         // Act
-        List<Employee> result = employeesService.getEmployeeByNameSearch("O'Brien");
+        List<Employee> result = employeesService.getEmployeesByNameSearch("O'Brien");
 
         // Assert
         assertThat(result).isNotNull();
@@ -253,12 +253,12 @@ class EmployeesServiceTest {
     }
 
     @Test
-    void getEmployeeByNameSearch_shouldReturnEmptyList_whenPortReturnsEmptyList() {
+    void getEmployeesByNameSearch_shouldReturnEmptyList_whenPortReturnsEmptyList() {
         // Arrange
         when(loadEmployeesPort.loadAllEmployees()).thenReturn(Collections.emptyList());
 
         // Act
-        List<Employee> result = employeesService.getEmployeeByNameSearch("John");
+        List<Employee> result = employeesService.getEmployeesByNameSearch("John");
 
         // Assert
         assertThat(result).isNotNull();

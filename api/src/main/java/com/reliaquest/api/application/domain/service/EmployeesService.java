@@ -32,7 +32,7 @@ public class EmployeesService
     }
 
     @Override
-    public List<Employee> getEmployeeByNameSearch(String name) {
+    public List<Employee> getEmployeesByNameSearch(String name) {
         List<Employee> allEmployees = loadEmployeesPort.loadAllEmployees();
 
         return allEmployees.stream()

@@ -15,6 +15,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -42,7 +43,7 @@ public class EmployeeController implements IEmployeeController<Employee, String>
     public ResponseEntity<List<Employee>> getEmployeesByNameSearch(@PathVariable String searchString) {
         log.info("Request to get employees by name search with search string: {}", searchString);
         return new ResponseEntity<>(
-                getEmployeesByNameSearchUseCase.getEmployeeByNameSearch(searchString), HttpStatus.OK);
+                getEmployeesByNameSearchUseCase.getEmployeesByNameSearch(searchString), HttpStatus.OK);
     }
 
     @Override
@@ -90,6 +91,7 @@ public class EmployeeController implements IEmployeeController<Employee, String>
     }
 
     @Override
+    @PostMapping
     public ResponseEntity<Employee> createEmployee(String employeeInput) {
         return null;
     }
